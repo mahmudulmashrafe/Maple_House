@@ -225,12 +225,17 @@ if ($latest_health && isset($latest_health['blood_pressure'])) {
         .logout-btn {
             color: white !important;
             padding: 12px 20px !important;
-            border-left: 3px solid transparent !important;
+            border-left: 3px solid #c0392b !important;
+            background: #e74c3c !important;
         }
         
         .logout-btn:hover {
-            background: rgba(231,76,60,0.1) !important;
-            border-left-color: #e74c3c !important;
+            background: #c0392b !important;
+            border-left-color: #a93226 !important;
+        }
+        
+        .logout-btn i {
+            color: white !important;
         }
 
         /* Main Content Styles */

@@ -26,6 +26,12 @@ if (!$resident) {
     exit();
 }
 
+// Get all available payment plans
+$plans_query = "SELECT * FROM payment_plans ORDER BY monthly_fee ASC";
+$plans_stmt = $db->prepare($plans_query);
+$plans_stmt->execute();
+$all_plans = $plans_stmt->fetchAll(PDO::FETCH_ASSOC);
+
 // Handle personal info update
 $message = '';
 $message_type = '';
@@ -57,6 +63,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
             $resident = $resident_stmt->fetch(PDO::FETCH_ASSOC);
         } else {
             $message = "Failed to update profile.";
+            $message_type = "error";
+        }
+    } catch (PDOException $e) {
+        $message = "Error: " . $e->getMessage();
+        $message_type = "error";
+    }
+}
+
+// Handle subscription renewal/change
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['renew_subscription'])) {
+    $new_plan_id = $_POST['plan_id'];
+    $current_plan_id = $resident['plan_id'];
+    
+    try {
+        // Get new plan details
+        $plan_query = "SELECT * FROM payment_plans WHERE id = :plan_id";
+        $plan_stmt = $db->prepare($plan_query);
+        $plan_stmt->bindParam(':plan_id', $new_plan_id);
+        $plan_stmt->execute();
+        $new_plan = $plan_stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($new_plan) {
+            // Update resident's plan
+            $update_plan_query = "UPDATE residents SET plan_id = :plan_id WHERE user_id = :user_id";
+            $update_plan_stmt = $db->prepare($update_plan_query);
+            $update_plan_stmt->bindParam(':plan_id', $new_plan_id);
+            $update_plan_stmt->bindParam(':user_id', $_SESSION['user_id']);
+            
+            if ($update_plan_stmt->execute()) {
+                // Record in revenue history
+                $payment_type = ($new_plan_id == $current_plan_id) ? 'renewal' : 'upgrade';
+                $revenue_query = "INSERT INTO resident_revenue_history 
+                                 (user_id, resident_id, plan_id, amount, payment_date, payment_type, payment_status) 
+                                 VALUES 
+                                 (:user_id, :resident_id, :plan_id, :amount, NOW(), :payment_type, 'paid')";
+                $revenue_stmt = $db->prepare($revenue_query);
+                $revenue_stmt->bindParam(':user_id', $_SESSION['user_id']);
+                $revenue_stmt->bindParam(':resident_id', $resident['id']);
+                $revenue_stmt->bindParam(':plan_id', $new_plan_id);
+                $revenue_stmt->bindParam(':amount', $new_plan['monthly_fee']);
+                $revenue_stmt->bindParam(':payment_type', $payment_type);
+                $revenue_stmt->execute();
+                
+                $action = ($new_plan_id == $current_plan_id) ? 'renewed' : 'changed';
+                $message = "Subscription {$action} successfully to {$new_plan['plan_name']}!";
+                $message_type = "success";
+                
+                // Refresh resident data
+                $resident_stmt->execute();
+                $resident = $resident_stmt->fetch(PDO::FETCH_ASSOC);
+            } else {
+                $message = "Failed to update subscription.";
+                $message_type = "error";
+            }
+        } else {
+            $message = "Invalid plan selected.";
             $message_type = "error";
         }
     } catch (PDOException $e) {
@@ -243,6 +305,118 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_password'])) {
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
 
+        .plans-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .plan-card {
+            position: relative;
+            display: block;
+            border: 3px solid #e9ecef;
+            border-radius: 15px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: white;
+        }
+
+        .plan-card input[type="radio"] {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+
+        .plan-content {
+            pointer-events: none;
+        }
+
+        .plan-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            border-color: #667eea;
+        }
+
+        .plan-card input[type="radio"]:checked ~ .plan-content {
+            opacity: 1;
+        }
+
+        .plan-card:has(input[type="radio"]:checked) {
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+        }
+
+        .plan-card.current-plan {
+            border-color: #28a745;
+            background: rgba(40, 167, 69, 0.05);
+        }
+
+        .plan-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .plan-header h3 {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 1.3rem;
+        }
+
+        .current-badge {
+            background: #28a745;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .plan-price {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .plan-price span {
+            font-size: 1rem;
+            color: #666;
+            font-weight: 400;
+        }
+
+        .plan-features {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .feature {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #555;
+            font-size: 0.95rem;
+        }
+
+        .feature i {
+            color: #667eea;
+            width: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .plans-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         .message {
             padding: 12px 20px;
             border-radius: 8px;
@@ -346,6 +520,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_password'])) {
                     <div class="info-value"><?php echo $resident['cleaning_limit']; ?> times/month</div>
                 </div>
             </div>
+        </div>
+
+        <!-- Subscription Renewal -->
+        <div class="section">
+            <h2><i class="fas fa-sync-alt"></i> Renew or Change Subscription</h2>
+            
+            <?php if ($message && isset($_POST['renew_subscription'])): ?>
+                <div class="message <?php echo $message_type; ?>">
+                    <i class="fas fa-<?php echo $message_type === 'success' ? 'check-circle' : 'exclamation-circle'; ?>"></i>
+                    <?php echo $message; ?>
+                </div>
+            <?php endif; ?>
+            
+            <p style="color: #666; margin-bottom: 20px;">
+                <i class="fas fa-info-circle"></i> Select a plan to renew your current subscription or upgrade/downgrade to a different plan.
+            </p>
+            
+            <form method="POST" id="renewalForm">
+                <div class="plans-grid">
+                    <?php foreach ($all_plans as $plan): 
+                        $is_current = ($plan['id'] == $resident['plan_id']);
+                    ?>
+                        <label class="plan-card <?php echo $is_current ? 'current-plan' : ''; ?>" for="plan_<?php echo $plan['id']; ?>">
+                            <input type="radio" name="plan_id" value="<?php echo $plan['id']; ?>" id="plan_<?php echo $plan['id']; ?>" <?php echo $is_current ? 'checked' : ''; ?> required>
+                            <div class="plan-content">
+                                <div class="plan-header">
+                                    <h3><?php echo htmlspecialchars($plan['plan_name']); ?></h3>
+                                    <?php if ($is_current): ?>
+                                        <span class="current-badge"><i class="fas fa-check-circle"></i> Current</span>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="plan-price">৳<?php echo number_format($plan['monthly_fee']); ?><span>/month</span></div>
+                                <div class="plan-features">
+                                    <div class="feature"><i class="fas fa-tshirt"></i> <?php echo $plan['laundry_limit']; ?> Laundry/month</div>
+                                    <div class="feature"><i class="fas fa-broom"></i> <?php echo $plan['cleaning_limit']; ?> Cleaning/month</div>
+                                    <div class="feature"><i class="fas fa-check-circle"></i> Full Access to Services</div>
+                                </div>
+                            </div>
+                        </label>
+                    <?php endforeach; ?>
+                </div>
+                
+                <button type="submit" name="renew_subscription" class="btn btn-primary" style="margin-top: 20px;">
+                    <i class="fas fa-credit-card"></i> Confirm & Pay
+                </button>
+            </form>
         </div>
 
         <!-- Password Reset -->
