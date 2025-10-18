@@ -1,23 +1,125 @@
+/* Page Transition Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+html {
+    animation: fadeIn 0.5s ease-out;
+}
+
 /* Authentication Styles */
 .auth-body {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 20px;
+    position: relative;
+    background-color: #2c3e50;
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Rotating Background Images */
+.auth-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: 0;
+    filter: blur(3px);
+}
+
+.auth-bg-1 {
+    background-image: url('/Maple_House/images/bg-1.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: #f8f9fa;
+    opacity: 1;
+    animation: authImageAnimation1 15s infinite;
+}
+
+.auth-bg-2 {
+    background-image: url('/Maple_House/images/bg-2.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: #f8f9fa;
+    opacity: 0;
+    animation: authImageAnimation2 15s infinite;
+}
+
+.auth-bg-3 {
+    background-image: url('/Maple_House/images/bg-3.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: #f8f9fa;
+    opacity: 0;
+    animation: authImageAnimation3 15s infinite;
+}
+
+@keyframes authImageAnimation1 {
+    0% { opacity: 1; }
+    33% { opacity: 1; }
+    34% { opacity: 0; }
+    100% { opacity: 0; }
+}
+
+@keyframes authImageAnimation2 {
+    0% { opacity: 0; }
+    33% { opacity: 0; }
+    34% { opacity: 1; }
+    66% { opacity: 1; }
+    67% { opacity: 0; }
+    100% { opacity: 0; }
+}
+
+@keyframes authImageAnimation3 {
+    0% { opacity: 0; }
+    66% { opacity: 0; }
+    67% { opacity: 1; }
+    100% { opacity: 1; }
+}
+
+/* Dark overlay */
+.auth-body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 1;
 }
 
 .auth-container {
     width: 100%;
     max-width: 450px;
+    position: relative;
+    z-index: 2;
 }
 
 .auth-card {
-    background: white;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 20px;
     padding: 40px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
     animation: slideUp 0.5s ease-out;
 }
 
@@ -38,13 +140,14 @@
 }
 
 .auth-header h2 {
-    color: #2c5aa0;
+    color: white;
     font-size: 2rem;
     margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
 }
 
 .auth-header p {
-    color: #666;
+    color: rgba(255, 255, 255, 0.9);
     font-size: 1.1rem;
 }
 
@@ -82,14 +185,15 @@
 .auth-form label {
     display: block;
     margin-bottom: 8px;
-    color: #333;
+    color: white;
     font-weight: 500;
     font-size: 0.95rem;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
 }
 
 .auth-form label i {
     margin-right: 8px;
-    color: #2c5aa0;
+    color: rgba(255, 255, 255, 0.8);
     width: 16px;
 }
 
@@ -127,18 +231,19 @@
 
 .auth-links p {
     margin: 10px 0;
-    color: #666;
+    color: rgba(255, 255, 255, 0.8);
 }
 
 .auth-links a {
-    color: #2c5aa0;
+    color: white;
     text-decoration: none;
     font-weight: 500;
     transition: color 0.3s;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
 }
 
 .auth-links a:hover {
-    color: #1e4080;
+    color: rgba(255, 255, 255, 0.8);
     text-decoration: underline;
 }
 

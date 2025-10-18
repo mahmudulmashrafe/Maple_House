@@ -103,14 +103,68 @@ session_start();
 
         /* Enhanced Hero Section */
         .hero {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
-            text-align: center;
+            justify-content: center;
             color: white;
+            text-align: center;
             position: relative;
             overflow: hidden;
+        }
+
+        .hero-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            z-index: 0;
+            filter: blur(2px);
+        }
+
+        .hero-bg-1 {
+            background: #f8f9fa url('images/bg-1.jpg') center/cover no-repeat;
+            opacity: 1;
+            animation: imageAnimation1 15s infinite;
+        }
+
+        .hero-bg-2 {
+            background: #f8f9fa url('images/bg-2.jpg') center/cover no-repeat;
+            opacity: 0;
+            animation: imageAnimation2 15s infinite;
+        }
+
+        .hero-bg-3 {
+            background: #f8f9fa url('images/bg-3.jpg') center/cover no-repeat;
+            opacity: 0;
+            animation: imageAnimation3 15s infinite;
+        }
+
+        @keyframes imageAnimation1 {
+            0% { opacity: 1; }
+            33% { opacity: 1; }
+            34% { opacity: 0; }
+            100% { opacity: 0; }
+        }
+
+        @keyframes imageAnimation2 {
+            0% { opacity: 0; }
+            33% { opacity: 0; }
+            34% { opacity: 1; }
+            66% { opacity: 1; }
+            67% { opacity: 0; }
+            100% { opacity: 0; }
+        }
+
+        @keyframes imageAnimation3 {
+            0% { opacity: 0; }
+            66% { opacity: 0; }
+            67% { opacity: 1; }
+            100% { opacity: 1; }
         }
 
         .hero::before {
@@ -120,7 +174,7 @@ session_start();
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0,0,0,0.3);
+            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5));
             z-index: 1;
         }
 
@@ -669,6 +723,9 @@ session_start();
 
     <!-- Hero Section -->
     <section id="home" class="hero">
+        <div class="hero-bg hero-bg-1"></div>
+        <div class="hero-bg hero-bg-2"></div>
+        <div class="hero-bg hero-bg-3"></div>
         <div class="hero-content">
             <h1>Welcome to Maple House</h1>
             <p>A caring community for senior citizens providing comprehensive care, health services, and a comfortable home environment.</p>

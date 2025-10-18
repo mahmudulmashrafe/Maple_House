@@ -133,8 +133,11 @@ if ($_POST && isset($_POST['register'])) {
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="auth-body">
-    <div class="auth-container" style="max-width: 600px;">
-        <div class="auth-card">
+    <div class="auth-bg auth-bg-1" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: url('images/bg-1.jpg'); background-size: cover; background-position: center; z-index: -2; filter: blur(3px);"></div>
+    <div class="auth-bg auth-bg-2" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: url('images/bg-2.jpg'); background-size: cover; background-position: center; z-index: -2; filter: blur(3px); opacity: 0;"></div>
+    <div class="auth-bg auth-bg-3" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: url('images/bg-3.jpg'); background-size: cover; background-position: center; z-index: -2; filter: blur(3px); opacity: 0;"></div>
+    <div class="auth-container" style="max-width: 600px; position: relative; z-index: 10;">
+        <div class="auth-card" style="background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 20px; padding: 40px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);">
             <div class="auth-header">
                 <h2><i class="fas fa-home"></i> Maple House</h2>
                 <p>Register as a new resident</p>

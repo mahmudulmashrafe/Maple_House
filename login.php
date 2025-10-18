@@ -62,8 +62,11 @@ if ($_POST && isset($_POST['login'])) {
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="auth-body">
-    <div class="auth-container">
-        <div class="auth-card">
+    <div class="auth-bg auth-bg-1" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: url('images/bg-1.jpg'); background-size: cover; background-position: center; z-index: -2; filter: blur(3px);"></div>
+    <div class="auth-bg auth-bg-2" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: url('images/bg-2.jpg'); background-size: cover; background-position: center; z-index: -2; filter: blur(3px); opacity: 0;"></div>
+    <div class="auth-bg auth-bg-3" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: url('images/bg-3.jpg'); background-size: cover; background-position: center; z-index: -2; filter: blur(3px); opacity: 0;"></div>
+    <div class="auth-container" style="position: relative; z-index: 10;">
+        <div class="auth-card" style="background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 20px; padding: 40px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);">
             <div class="auth-header">
                 <h2><i class="fas fa-home"></i> Maple House</h2>
                 <p>Sign in to your account</p>
@@ -92,6 +95,11 @@ if ($_POST && isset($_POST['login'])) {
                         Password
                     </label>
                     <input type="password" id="password" name="password" required>
+                    <div style="text-align: right; margin-top: 8px;">
+                        <a href="reset_password.php" style="color: rgba(255, 255, 255, 0.9); font-size: 0.9rem; text-decoration: none;">
+                            <i class="fas fa-key"></i> Forgot Password?
+                        </a>
+                    </div>
                 </div>
                 
                 <button type="submit" name="login" class="btn btn-primary btn-full">
