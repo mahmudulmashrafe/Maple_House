@@ -2,10 +2,10 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Host: localhost
--- Generation Time: Sep 20, 2025 at 08:22 PM
--- Server version: 10.4.28-MariaDB
--- PHP Version: 8.2.4
+-- Host: 127.0.0.1
+-- Generation Time: Oct 18, 2025 at 09:36 PM
+-- Server version: 10.4.32-MariaDB
+-- PHP Version: 8.0.30
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -180,6 +180,27 @@ CREATE TABLE `chef_usage_sessions` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `contact_messages`
+--
+
+CREATE TABLE `contact_messages` (
+  `id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `subject` varchar(500) NOT NULL,
+  `message` text NOT NULL,
+  `status` enum('unread','read','replied') DEFAULT 'unread',
+  `ip_address` varchar(45) DEFAULT NULL,
+  `user_agent` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `read_at` timestamp NULL DEFAULT NULL,
+  `replied_at` timestamp NULL DEFAULT NULL,
+  `admin_notes` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `daily_meals`
 --
 
@@ -267,7 +288,15 @@ INSERT INTO `daily_meals` (`id`, `meal_date`, `meal_type`, `prepared_by`, `break
 (38, '2025-09-21', 'Dinner', NULL, NULL, NULL, 1, '2025-09-20 15:58:15', '2025-09-20 15:58:15', 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 20, 27, 29, 7, 27, 17, 55, 54, 'not_started', 'not_started', 'not_started', NULL, NULL, NULL, NULL, NULL, NULL),
 (39, '2025-09-22', 'Lunch', NULL, NULL, 2, NULL, '2025-09-20 15:58:35', '2025-09-20 15:58:35', 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 20, 28, NULL, 7, 59, 20, 53, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'not_started', 'not_started', 'not_started', NULL, NULL, NULL, NULL, NULL, NULL),
 (40, '2025-09-22', 'Dinner', NULL, NULL, NULL, 1, '2025-09-20 15:58:56', '2025-09-20 15:58:56', 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 20, 23, 29, 15, 24, 18, 53, NULL, 'not_started', 'not_started', 'not_started', NULL, NULL, NULL, NULL, NULL, NULL),
-(41, '2025-09-23', 'Breakfast', NULL, 2, NULL, NULL, '2025-09-20 15:59:12', '2025-09-20 15:59:12', 0.00, 19, 22, NULL, 24, 25, 41, 53, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'not_started', 'not_started', 'not_started', NULL, NULL, NULL, NULL, NULL, NULL);
+(41, '2025-09-23', 'Breakfast', NULL, 2, NULL, NULL, '2025-09-20 15:59:12', '2025-09-20 15:59:12', 0.00, 19, 22, NULL, 24, 25, 41, 53, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'not_started', 'not_started', 'not_started', NULL, NULL, NULL, NULL, NULL, NULL),
+(42, '2025-10-18', 'Breakfast', NULL, 1, NULL, NULL, '2025-10-18 13:23:56', '2025-10-18 13:23:56', 0.00, 19, 28, NULL, 23, 21, 41, 51, 54, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'not_started', 'not_started', 'not_started', NULL, NULL, NULL, NULL, NULL, NULL),
+(43, '2025-10-18', 'Lunch', NULL, NULL, 1, NULL, '2025-10-18 13:24:24', '2025-10-18 13:24:36', 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 20, 28, NULL, 6, 1, NULL, 55, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'not_started', 'not_started', 'not_started', NULL, NULL, NULL, NULL, NULL, NULL),
+(44, '2025-10-19', 'Lunch', NULL, NULL, 2, NULL, '2025-10-18 13:24:58', '2025-10-18 13:25:38', 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 24, 28, NULL, 2, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'not_started', 'not_started', 'not_started', NULL, NULL, NULL, NULL, NULL, NULL),
+(45, '2025-10-18', 'Dinner', NULL, NULL, NULL, 1, '2025-10-18 13:25:14', '2025-10-18 13:25:14', 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 26, 17, NULL, 5, NULL, NULL, NULL, NULL, 'not_started', 'not_started', 'not_started', NULL, NULL, NULL, NULL, NULL, NULL),
+(46, '2025-10-19', 'Breakfast', NULL, 1, NULL, NULL, '2025-10-18 13:25:28', '2025-10-18 13:25:28', 0.00, 24, 21, NULL, 28, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'not_started', 'not_started', 'not_started', NULL, NULL, NULL, NULL, NULL, NULL),
+(47, '2025-10-19', 'Dinner', NULL, NULL, NULL, 2, '2025-10-18 13:25:47', '2025-10-18 13:26:10', 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 26, NULL, NULL, 5, NULL, NULL, 43, NULL, 'not_started', 'not_started', 'not_started', NULL, NULL, NULL, NULL, NULL, NULL),
+(48, '2025-10-20', 'Breakfast', NULL, 1, NULL, NULL, '2025-10-18 13:26:23', '2025-10-18 13:26:23', 0.00, 28, 21, NULL, 28, NULL, NULL, 53, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'not_started', 'not_started', 'not_started', NULL, NULL, NULL, NULL, NULL, NULL),
+(49, '2025-10-20', 'Lunch', NULL, NULL, 2, NULL, '2025-10-18 13:26:43', '2025-10-18 13:26:43', 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 24, NULL, NULL, 2, NULL, NULL, 51, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'not_started', 'not_started', 'not_started', NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -381,7 +410,13 @@ INSERT INTO `expenses` (`id`, `expense_type`, `category`, `description`, `amount
 (14, 'inventory', 'Inventory Purchase', 'Inventory purchase: Rice (150 units)', 15000.00, '2025-09-20', 'cash', 'Unknown Supplier', '', 5, 'inventory_item', NULL, NULL, 0, NULL, NULL, 12, NULL, 'approved', '2025-09-20 17:53:15', '2025-09-20 17:53:15'),
 (15, 'inventory', 'Inventory Purchase', 'Inventory purchase: Chicken Meat (50 units)', 7500.00, '2025-09-20', 'cash', 'Unknown Supplier', '', 6, 'inventory_item', NULL, NULL, 0, NULL, NULL, 12, NULL, 'approved', '2025-09-20 17:54:37', '2025-09-20 17:54:37'),
 (16, 'inventory', 'Inventory Purchase', 'Inventory purchase: Beef (50 units)', 35000.00, '2025-09-20', 'cash', 'Unknown Supplier', '', 7, 'inventory_item', NULL, NULL, 0, NULL, NULL, 12, NULL, 'approved', '2025-09-20 17:56:15', '2025-09-20 17:56:15'),
-(17, 'inventory', 'Inventory Purchase', 'Inventory purchase: Chili Powder (100 units)', 20000.00, '2025-09-20', 'cash', 'Unknown Supplier', '', 8, 'inventory_item', NULL, NULL, 0, NULL, NULL, 12, NULL, 'approved', '2025-09-20 17:57:47', '2025-09-20 17:57:47');
+(17, 'inventory', 'Inventory Purchase', 'Inventory purchase: Chili Powder (100 units)', 20000.00, '2025-09-20', 'cash', 'Unknown Supplier', '', 8, 'inventory_item', NULL, NULL, 0, NULL, NULL, 12, NULL, 'approved', '2025-09-20 17:57:47', '2025-09-20 17:57:47'),
+(18, 'salary', 'Staff Salary', 'Monthly salary: Sarah Rahman (October 2025)', 45000.00, '2025-10-18', 'cash', NULL, NULL, 2, 'staff_salary', NULL, NULL, 0, NULL, NULL, 12, NULL, 'approved', '2025-10-18 14:36:01', '2025-10-18 14:36:01'),
+(19, 'salary', 'Staff Salary', 'Monthly salary: Fatima Begum (October 2025)', 25000.00, '2025-10-18', 'cash', NULL, NULL, 4, 'staff_salary', NULL, NULL, 0, NULL, NULL, 12, NULL, 'approved', '2025-10-18 14:36:01', '2025-10-18 14:36:01'),
+(20, 'salary', 'Staff Salary', 'Monthly salary: Rabiul Hasan (October 2025)', 25000.00, '2025-10-18', 'cash', NULL, NULL, 14, 'staff_salary', NULL, NULL, 0, NULL, NULL, 12, NULL, 'approved', '2025-10-18 14:36:01', '2025-10-18 14:36:01'),
+(21, 'salary', 'Staff Salary', 'Monthly salary: Jobbar Ahmed (October 2025)', 35000.00, '2025-10-18', 'cash', NULL, NULL, 15, 'staff_salary', NULL, NULL, 0, NULL, NULL, 12, NULL, 'approved', '2025-10-18 14:36:01', '2025-10-18 14:36:01'),
+(22, 'salary', 'Staff Salary', 'Monthly salary: Robin Rauf (October 2025)', 35000.00, '2025-10-18', 'cash', NULL, NULL, 21, 'staff_salary', NULL, NULL, 0, NULL, NULL, 12, NULL, 'approved', '2025-10-18 14:36:01', '2025-10-18 14:36:01'),
+(23, 'salary', 'Staff Salary', 'Monthly salary: Hashem Rabbi (October 2025)', 35000.00, '2025-10-18', 'cash', NULL, NULL, 22, 'staff_salary', NULL, NULL, 0, NULL, NULL, 12, NULL, 'approved', '2025-10-18 14:36:01', '2025-10-18 14:36:01');
 
 -- --------------------------------------------------------
 
@@ -443,7 +478,9 @@ CREATE TABLE `health_records` (
 INSERT INTO `health_records` (`id`, `resident_id`, `doctor_id`, `checkup_date`, `blood_pressure`, `blood_sugar`, `weight`, `heart_rate`, `temperature`, `notes`, `prescribed_medicines`, `next_checkup_date`, `created_at`) VALUES
 (1, 1, 1, '2024-01-05', '140/90', 7.50, 68.50, 75, 98.60, 'Blood pressure slightly elevated. Blood sugar under control.', 'Metformin 500mg twice daily, Lisinopril 10mg once daily', '2024-02-05', '2025-08-11 08:59:04'),
 (2, 2, 1, '2024-01-08', '130/85', NULL, 72.00, 80, 98.40, 'Arthritis pain manageable. Overall good condition.', 'Ibuprofen 400mg as needed for pain', '2024-02-08', '2025-08-11 08:59:04'),
-(3, 3, 1, '2024-01-10', '150/95', NULL, 75.20, 85, 99.00, 'Heart condition stable. Needs regular monitoring.', 'Atenolol 50mg daily, Aspirin 75mg daily', '2024-02-10', '2025-08-11 08:59:04');
+(3, 3, 1, '2024-01-10', '150/95', NULL, 75.20, 85, 99.00, 'Heart condition stable. Needs regular monitoring.', 'Atenolol 50mg daily, Aspirin 75mg daily', '2024-02-10', '2025-08-11 08:59:04'),
+(4, 1, 1, '2025-10-18', '121/90', NULL, 90.00, 72, 98.60, 'All Good', NULL, '2025-10-19', '2025-10-18 17:55:45'),
+(5, 7, 1, '2025-10-18', '121/90', NULL, 80.00, 100, 98.70, 'All Ok', NULL, '2025-10-31', '2025-10-18 18:11:54');
 
 -- --------------------------------------------------------
 
@@ -915,7 +952,14 @@ INSERT INTO `notifications` (`id`, `user_id`, `title`, `message`, `type`, `is_re
 (8, 14, 'New Service Request', 'New Room Cleaning request from Room 102', 'Info', 0, 'tasks.php', '2025-09-18 18:02:25'),
 (9, 17, 'Service Request Submitted', 'Your Room Cleaning request has been submitted and assigned to staff.', 'Success', 0, 'services.php', '2025-09-18 18:02:25'),
 (10, 15, 'New Service Request', 'New Room Cleaning request from Room 102', 'Info', 0, 'tasks.php', '2025-09-19 03:50:56'),
-(11, 17, 'Service Request Submitted', 'Your Room Cleaning request has been submitted and assigned to staff.', 'Success', 0, 'services.php', '2025-09-19 03:50:56');
+(11, 17, 'Service Request Submitted', 'Your Room Cleaning request has been submitted and assigned to staff.', 'Success', 0, 'services.php', '2025-09-19 03:50:56'),
+(12, 15, 'New Service Request', 'New Laundry request from Room 102', 'Info', 0, 'tasks.php', '2025-10-18 13:49:19'),
+(13, 17, 'Service Request Submitted', 'Your Laundry request has been submitted and assigned to staff.', 'Success', 0, 'services.php', '2025-10-18 13:49:19'),
+(14, 17, 'Service Request Submitted', 'Your Room Cleaning request has been submitted. Admin will assign staff/doctor soon.', 'Success', 0, 'services.php', '2025-10-18 13:58:21'),
+(15, 17, 'Service Request Submitted', 'Your Laundry request has been submitted. Admin will assign staff/doctor soon.', 'Success', 0, 'services.php', '2025-10-18 14:23:17'),
+(16, 17, 'Service Request Submitted', 'Your Doctor Appointment request has been submitted. Admin will assign staff/doctor soon.', 'Success', 0, 'services.php', '2025-10-18 17:14:56'),
+(17, 17, 'Service Request Submitted', 'Your Laundry request has been submitted. Admin will assign staff/doctor soon.', 'Success', 0, 'services.php', '2025-10-18 18:40:21'),
+(18, 17, 'Service Request Submitted', 'Your Room Cleaning request has been submitted. Admin will assign staff/doctor soon.', 'Success', 0, 'services.php', '2025-10-18 18:48:30');
 
 -- --------------------------------------------------------
 
@@ -1017,7 +1061,7 @@ INSERT INTO `residents` (`id`, `user_id`, `room_number`, `plan_id`, `admission_d
 (3, 7, '201', 1, '2023-10-10', 'Heart condition', 'Shellfish', 'Son: Rafiq Ahmed, Phone: +880 6666 888999', 'Paid', NULL, '2024-01-15', 65, 75, 35, 15, '2025-08-11 08:59:04', '2025-09-18 03:16:21'),
 (5, 13, '302', 2, '2025-09-17', 'Good', 'None', 'Tahmid - 01899342167', 'Paid', NULL, '2025-10-18', 70, 70, 0, 0, '2025-09-17 15:02:56', '2025-09-18 03:43:30'),
 (6, 16, '206', 5, '2025-09-18', 'Good', 'None', '', 'Paid', NULL, '2025-10-18', 70, 70, 0, 0, '2025-09-18 03:18:35', '2025-09-18 12:37:51'),
-(7, 17, '102', 1, '2025-09-18', '', '', '', 'Paid', NULL, '2025-10-18', 70, 70, 0, 0, '2025-09-18 12:23:23', '2025-09-18 12:26:12');
+(7, 17, '102', 3, '2025-09-18', '', '', '', 'Paid', NULL, '2025-10-18', 70, 70, 0, 0, '2025-09-18 12:23:23', '2025-10-18 19:34:01');
 
 -- --------------------------------------------------------
 
@@ -1056,7 +1100,31 @@ INSERT INTO `resident_revenue_history` (`id`, `user_id`, `resident_id`, `plan_id
 (10, 16, 6, 5, 'TXN_2025_93408', 50000.00, 'upgrade', 'paid', '2025-09-18', '2025-09-18', '2025-10-18', '2025-10-18', '2025-10-20', 'cash', 12, 'Plan upgraded and renewed', 1, '2025-09-18 03:43:11', '2025-09-18 03:43:11'),
 (11, 13, 5, 2, 'TXN_2025_39373', 15000.00, 'renewal', 'paid', '2025-09-18', '2025-09-18', '2025-10-18', '2025-10-18', '2025-10-20', 'cash', 12, 'Monthly subscription renewed', 1, '2025-09-18 03:43:30', '2025-09-18 03:43:30'),
 (12, 6, 2, 2, 'TXN_2025_50412', 15000.00, 'renewal', 'paid', '2025-09-18', '2025-09-18', '2025-10-18', '2025-10-18', '2025-10-20', 'cash', 12, 'Monthly subscription renewed', 1, '2025-09-18 03:43:40', '2025-09-18 03:43:40'),
-(13, 5, 1, 3, 'TXN_2025_69049', 25000.00, 'renewal', 'paid', '2025-09-18', '2025-09-18', '2025-10-18', '2025-10-18', '2025-10-20', 'cash', 12, 'Monthly subscription renewed', 1, '2025-09-18 12:46:28', '2025-09-18 12:46:28');
+(13, 5, 1, 3, 'TXN_2025_69049', 25000.00, 'renewal', 'paid', '2025-09-18', '2025-09-18', '2025-10-18', '2025-10-18', '2025-10-20', 'cash', 12, 'Monthly subscription renewed', 1, '2025-09-18 12:46:28', '2025-09-18 12:46:28'),
+(17, 17, 7, 3, '', 25000.00, 'renewal', 'paid', '2025-10-19', '0000-00-00', '0000-00-00', '0000-00-00', '0000-00-00', 'cash', NULL, NULL, 1, '2025-10-18 19:34:39', '2025-10-18 19:34:39');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `resident_service_quotas`
+--
+
+CREATE TABLE `resident_service_quotas` (
+  `id` int(11) NOT NULL,
+  `resident_id` int(11) NOT NULL,
+  `service_name` varchar(100) NOT NULL,
+  `month` varchar(7) NOT NULL,
+  `additional_quota` int(11) DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `resident_service_quotas`
+--
+
+INSERT INTO `resident_service_quotas` (`id`, `resident_id`, `service_name`, `month`, `additional_quota`, `created_at`) VALUES
+(1, 7, 'Laundry Pack', '2025-10', 5, '2025-10-18 18:58:20'),
+(2, 7, 'Laundry', '2025-10', 5, '2025-10-18 19:13:24');
 
 -- --------------------------------------------------------
 
@@ -1081,9 +1149,38 @@ INSERT INTO `services` (`id`, `service_name`, `base_cost`, `description`, `is_ac
 (1, 'Laundry', 5.00, 'Laundry service per item', 1, '2025-08-11 08:52:50'),
 (2, 'Room Cleaning', 100.00, 'Room cleaning service', 1, '2025-08-11 08:52:50'),
 (3, 'Transportation', 200.00, 'Transportation service', 1, '2025-08-11 08:52:50'),
-(4, 'Medical Consultation', 500.00, 'Doctor consultation', 1, '2025-08-11 08:52:50'),
-(5, 'Physiotherapy', 300.00, 'Physiotherapy session', 1, '2025-08-11 08:52:50'),
-(6, 'Emergency Care', 1000.00, 'Emergency medical care', 1, '2025-08-11 08:52:50');
+(4, 'Medical Consultation', 500.00, 'Doctor consultation', 0, '2025-08-11 08:52:50'),
+(5, 'Physiotherapy', 300.00, 'Physiotherapy session', 0, '2025-08-11 08:52:50'),
+(6, 'Emergency Care', 1000.00, 'Emergency medical care', 1, '2025-08-11 08:52:50'),
+(7, 'Doctor Appointment', 500.00, 'Schedule appointment with facility doctor', 1, '2025-10-18 13:37:06'),
+(8, 'Grocery Shopping', 150.00, 'Personal grocery and essentials shopping', 1, '2025-10-18 13:46:54');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `service_purchases`
+--
+
+CREATE TABLE `service_purchases` (
+  `id` int(11) NOT NULL,
+  `resident_id` int(11) NOT NULL,
+  `service_name` varchar(100) NOT NULL,
+  `quantity` int(11) NOT NULL,
+  `price_per_unit` decimal(10,2) NOT NULL,
+  `total_price` decimal(10,2) NOT NULL,
+  `payment_method` varchar(50) NOT NULL,
+  `purchase_date` datetime NOT NULL,
+  `status` varchar(20) DEFAULT 'completed',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `service_purchases`
+--
+
+INSERT INTO `service_purchases` (`id`, `resident_id`, `service_name`, `quantity`, `price_per_unit`, `total_price`, `payment_method`, `purchase_date`, `status`, `created_at`) VALUES
+(1, 7, 'Laundry Pack', 5, 90.00, 450.00, 'bkash', '2025-10-19 00:58:20', 'completed', '2025-10-18 18:58:20'),
+(2, 7, 'Laundry Pack', 5, 90.00, 450.00, 'bkash', '2025-10-19 01:13:24', 'completed', '2025-10-18 19:13:24');
 
 -- --------------------------------------------------------
 
@@ -1095,9 +1192,11 @@ CREATE TABLE `service_requests` (
   `id` int(11) NOT NULL,
   `resident_id` int(11) DEFAULT NULL,
   `service_id` int(11) DEFAULT NULL,
+  `service_type` enum('general','doctor_appointment') DEFAULT 'general',
   `request_date` date DEFAULT NULL,
   `scheduled_date` date DEFAULT NULL,
   `assigned_staff_id` int(11) DEFAULT NULL,
+  `assigned_doctor_id` int(11) DEFAULT NULL,
   `status` enum('Requested','Scheduled','In Progress','Completed','Cancelled') DEFAULT 'Requested',
   `cost` decimal(8,2) DEFAULT 0.00,
   `notes` text DEFAULT NULL,
@@ -1109,14 +1208,20 @@ CREATE TABLE `service_requests` (
 -- Dumping data for table `service_requests`
 --
 
-INSERT INTO `service_requests` (`id`, `resident_id`, `service_id`, `request_date`, `scheduled_date`, `assigned_staff_id`, `status`, `cost`, `notes`, `completed_at`, `created_at`) VALUES
-(1, 1, 1, '2024-01-10', '2024-01-11', 1, 'Completed', 0.00, 'Regular laundry service - within plan limit', NULL, '2025-08-11 08:59:04'),
-(2, 1, 2, '2024-01-12', '2024-01-13', 1, 'Completed', 0.00, 'Room cleaning - within plan limit', NULL, '2025-08-11 08:59:04'),
-(3, 2, 1, '2024-01-14', '2024-01-15', 1, 'Completed', 5.00, 'Extra laundry service - exceeds plan limit', NULL, '2025-08-11 08:59:04'),
-(4, 3, 3, '2024-01-13', '2024-01-16', 1, 'Completed', 200.00, 'Transportation to hospital for checkup', NULL, '2025-08-11 08:59:04'),
-(5, 7, 1, '2025-09-19', '2025-09-20', 2, 'Completed', 5.00, '', NULL, '2025-09-18 18:01:58'),
-(6, 7, 2, '2025-09-19', '2025-09-21', 2, 'Completed', 0.00, '', NULL, '2025-09-18 18:02:25'),
-(7, 7, 2, '2025-09-19', '2025-09-20', 3, 'Completed', 0.00, '', NULL, '2025-09-19 03:50:56');
+INSERT INTO `service_requests` (`id`, `resident_id`, `service_id`, `service_type`, `request_date`, `scheduled_date`, `assigned_staff_id`, `assigned_doctor_id`, `status`, `cost`, `notes`, `completed_at`, `created_at`) VALUES
+(1, 1, 1, 'general', '2024-01-10', '2024-01-11', 1, NULL, 'Completed', 0.00, 'Regular laundry service - within plan limit', NULL, '2025-08-11 08:59:04'),
+(2, 1, 2, 'general', '2024-01-12', '2024-01-13', 1, NULL, 'Completed', 0.00, 'Room cleaning - within plan limit', NULL, '2025-08-11 08:59:04'),
+(3, 2, 1, 'general', '2024-01-14', '2024-01-15', 1, NULL, 'Completed', 5.00, 'Extra laundry service - exceeds plan limit', NULL, '2025-08-11 08:59:04'),
+(4, 3, 3, 'general', '2024-01-13', '2024-01-16', 1, NULL, 'Completed', 200.00, 'Transportation to hospital for checkup', NULL, '2025-08-11 08:59:04'),
+(5, 7, 1, 'general', '2025-09-19', '2025-09-20', 2, NULL, 'Completed', 5.00, '', NULL, '2025-09-18 18:01:58'),
+(6, 7, 2, 'general', '2025-09-19', '2025-09-21', 2, NULL, 'Completed', 0.00, '', NULL, '2025-09-18 18:02:25'),
+(7, 7, 2, 'general', '2025-09-19', '2025-09-20', 3, NULL, 'Completed', 0.00, '', NULL, '2025-09-19 03:50:56'),
+(8, 7, 1, 'general', '2025-10-18', '2025-10-24', 3, NULL, 'Completed', 5.00, 'Preferred time: afternoon.', NULL, '2025-10-18 13:49:19'),
+(9, 7, 2, 'general', '2025-10-18', '2025-10-19', 2, NULL, 'In Progress', 0.00, 'Preferred time: evening.', NULL, '2025-10-18 13:58:21'),
+(10, 7, 1, 'general', '2025-10-18', '2025-10-24', 1, NULL, 'In Progress', 5.00, 'Preferred time: latenight.', NULL, '2025-10-18 14:23:17'),
+(11, 7, 7, 'doctor_appointment', '2025-10-18', '2025-10-19', NULL, 1, 'In Progress', 500.00, 'Preferred time: afternoon.', NULL, '2025-10-18 17:14:56'),
+(12, 7, 1, 'general', '2025-10-19', '2025-10-30', NULL, NULL, 'Requested', 5.00, 'Preferred time: afternoon.', NULL, '2025-10-18 18:40:21'),
+(13, 7, 2, 'general', '2025-10-19', '2025-10-28', NULL, NULL, 'Requested', 0.00, 'Preferred time: afternoon.', NULL, '2025-10-18 18:48:30');
 
 -- --------------------------------------------------------
 
@@ -1142,8 +1247,8 @@ CREATE TABLE `staff` (
 --
 
 INSERT INTO `staff` (`id`, `user_id`, `employee_id`, `department`, `position`, `salary`, `hire_date`, `shift_hours`, `is_available`, `created_at`) VALUES
-(1, 4, 'EMP001', 'Housekeeping', 'Care Assistant', 25000.00, '2023-01-15', '8:00 AM - 4:00 PM', 1, '2025-08-11 08:59:04'),
-(2, 14, 'EMP002', 'Housekeeping', 'Chef Assist', 30000.00, '2025-09-16', '9 - 5', 1, '2025-09-17 15:15:17'),
+(1, 4, 'EMP001', 'Housekeeping', 'Care Assistant', 25000.00, '2023-01-15', '4:00 PM - 10:00 PM', 1, '2025-08-11 08:59:04'),
+(2, 14, 'EMP002', 'Housekeeping', 'Cleaner', 30000.00, '2025-09-16', '9 AM - 3 PM', 1, '2025-09-17 15:15:17'),
 (3, 15, 'CHEF015', 'Kitchen', 'Chef - Head Chef', 30000.00, '2025-09-17', '6 am to 4 pm', 1, '2025-09-17 15:31:43');
 
 -- --------------------------------------------------------
@@ -1181,7 +1286,13 @@ INSERT INTO `staff_salaries` (`id`, `user_id`, `salary_month`, `base_salary`, `o
 (3, 14, '2025-09-01', 25000.00, 0.00, 0.00, 0.00, 0.00, 25000.00, 'pending', NULL, 'bank_transfer', 'Auto-renewal on 10th', 12, '2025-09-19 16:20:52', '2025-09-19 16:20:52'),
 (4, 15, '2025-09-01', 35000.00, 0.00, 0.00, 0.00, 0.00, 35000.00, 'pending', NULL, 'bank_transfer', 'Auto-renewal on 10th', 12, '2025-09-19 16:20:52', '2025-09-19 16:20:52'),
 (5, 21, '2025-09-01', 35000.00, 0.00, 0.00, 0.00, 0.00, 35000.00, 'pending', NULL, 'bank_transfer', 'Auto-renewal on 10th', 12, '2025-09-19 16:20:52', '2025-09-19 16:20:52'),
-(6, 22, '2025-09-01', 35000.00, 0.00, 0.00, 0.00, 0.00, 35000.00, 'pending', NULL, 'bank_transfer', 'Auto-renewal on 10th', 12, '2025-09-19 16:57:30', '2025-09-19 16:57:30');
+(6, 22, '2025-09-01', 35000.00, 0.00, 0.00, 0.00, 0.00, 35000.00, 'pending', NULL, 'bank_transfer', 'Auto-renewal on 10th', 12, '2025-09-19 16:57:30', '2025-09-19 16:57:30'),
+(7, 2, '2025-10-01', 45000.00, 0.00, 0.00, 0.00, 0.00, 45000.00, 'pending', NULL, 'bank_transfer', 'Auto-renewal on 10th', 12, '2025-10-18 14:36:01', '2025-10-18 14:36:01'),
+(8, 4, '2025-10-01', 25000.00, 0.00, 0.00, 0.00, 0.00, 25000.00, 'pending', NULL, 'bank_transfer', 'Auto-renewal on 10th', 12, '2025-10-18 14:36:01', '2025-10-18 14:36:01'),
+(9, 14, '2025-10-01', 25000.00, 0.00, 0.00, 0.00, 0.00, 25000.00, 'pending', NULL, 'bank_transfer', 'Auto-renewal on 10th', 12, '2025-10-18 14:36:01', '2025-10-18 14:36:01'),
+(10, 15, '2025-10-01', 35000.00, 0.00, 0.00, 0.00, 0.00, 35000.00, 'pending', NULL, 'bank_transfer', 'Auto-renewal on 10th', 12, '2025-10-18 14:36:01', '2025-10-18 14:36:01'),
+(11, 21, '2025-10-01', 35000.00, 0.00, 0.00, 0.00, 0.00, 35000.00, 'pending', NULL, 'bank_transfer', 'Auto-renewal on 10th', 12, '2025-10-18 14:36:01', '2025-10-18 14:36:01'),
+(12, 22, '2025-10-01', 35000.00, 0.00, 0.00, 0.00, 0.00, 35000.00, 'pending', NULL, 'bank_transfer', 'Auto-renewal on 10th', 12, '2025-10-18 14:36:01', '2025-10-18 14:36:01');
 
 -- --------------------------------------------------------
 
@@ -1217,8 +1328,8 @@ CREATE TABLE `users` (
 INSERT INTO `users` (`id`, `username`, `email`, `password`, `role_id`, `first_name`, `last_name`, `phone`, `address`, `date_of_birth`, `gender`, `emergency_contact_name`, `emergency_contact_phone`, `family_contact_info`, `profile_image`, `is_active`, `created_at`, `updated_at`) VALUES
 (1, 'admin', 'admin@maplehouse.com', '$2a$12$ihiurfSC2JXVoqpQWH1i5eUtW7.y3UuEl9.R1lNiGknHQtO0rXUnu', 1, 'System', 'Administrator', '+880 1234 567890', '123 Admin Street, Dhaka', '1980-01-01', 'Male', 'Emergency Admin', '+880 9876 543210', NULL, NULL, 1, '2025-08-11 08:59:04', '2025-08-11 08:59:04'),
 (2, 'doctorsarah', 'doctor@maplehouse.com', '$2y$10$BfDWzPbnO3AwNnxEZdHt9.3UgkLEvHeaj5bQpWJlhZK8FOjGUvmH6', 3, 'Sarah', 'Rahman', '+880 1111 222333', '456 Medical Lane, Dhaka', '1975-05-15', 'Female', 'Dr Emergency', '+880 1111 333444', NULL, NULL, 1, '2025-08-11 08:59:04', '2025-09-20 13:32:00'),
-(4, 'staff1', 'staff@maplehouse.com', '$2a$12$QyErxF8.h.2/YlJj2oaJEOniCCJ8P.PPmlFoh/parC/USBAl/DEay', 5, 'Fatima', 'Begum', '+880 3333 444555', '321 Staff Road, Dhaka', '1990-07-10', 'Female', 'Staff Emergency', '+880 3333 555666', NULL, NULL, 1, '2025-08-11 08:59:04', '2025-08-11 08:59:04'),
-(5, 'resident1', 'resident1@email.com', '$2a$12$vVN6.FZfw6dJ.jG3fOL..OnXQPc7HmJLKn9EVf3gfTEzp3Z7Nyo1e', 6, 'Abdul', 'Karim', '+880 4444 555666', '654 Old Street, Dhaka', '1945-12-05', 'Male', 'Son Ahmed Karim', '+880 4444 666777', NULL, NULL, 1, '2025-08-11 08:59:04', '2025-09-17 14:34:18'),
+(4, 'staff1', 'staff@maplehouse.com', '$2y$10$BfDWzPbnO3AwNnxEZdHt9.3UgkLEvHeaj5bQpWJlhZK8FOjGUvmH6', 5, 'Fatima', 'Begum', '+880 3333 444555', '321 Staff Road, Dhaka', '1990-07-10', 'Female', 'Staff Emergency', '+880 3333 555666', NULL, NULL, 1, '2025-08-11 08:59:04', '2025-10-18 13:13:04'),
+(5, 'resident1', 'resident1@email.com', '$2y$10$BfDWzPbnO3AwNnxEZdHt9.3UgkLEvHeaj5bQpWJlhZK8FOjGUvmH6', 6, 'Abdul', 'Karim', '+880 4444 555666', '654 Old Street, Dhaka', '1945-12-05', 'Male', 'Son Ahmed Karim', '+880 4444 666777', NULL, NULL, 1, '2025-08-11 08:59:04', '2025-10-18 13:16:19'),
 (6, 'resident2', 'resident2@email.com', '$2a$12$vVN6.FZfw6dJ.jG3fOL..OnXQPc7HmJLKn9EVf3gfTEzp3Z7Nyo1e', 6, 'Rashida', 'Khatun', '+880 5555 666777', '987 Senior Ave, Dhaka', '1950-08-22', 'Female', 'Daughter Nasreen', '+880 5555 777888', NULL, NULL, 1, '2025-08-11 08:59:04', '2025-08-11 08:59:04'),
 (7, 'resident3', 'resident3@email.com', '$2a$12$vVN6.FZfw6dJ.jG3fOL..OnXQPc7HmJLKn9EVf3gfTEzp3Z7Nyo1e', 6, 'Nur', 'Ahmed', '+880 6666 777888', '147 Care Lane, Dhaka', '1948-04-18', 'Male', 'Son Rafiq Ahmed', '+880 6666 888999', NULL, NULL, 1, '2025-08-11 08:59:04', '2025-08-11 08:59:04'),
 (12, 'admin1212', 'wts5nf1gpm@wyoxafp1.com', '$2y$10$hzC20thO4tkujbujlFTe/OQwIFIcI4OHaraKmhii.59Zc0TLJwk2a', 1, 'Alam', 'Hasan', '01726373733', 'dhaka', '1950-06-06', 'Male', 'Son', '01721111111', NULL, NULL, 1, '2025-08-11 09:15:00', '2025-08-11 09:23:09'),
@@ -1382,6 +1493,15 @@ ALTER TABLE `chef_usage_sessions`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_chef_usage_sessions_chef` (`chef_id`),
   ADD KEY `idx_chef_usage_sessions_date` (`meal_date`);
+
+--
+-- Indexes for table `contact_messages`
+--
+ALTER TABLE `contact_messages`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_status` (`status`),
+  ADD KEY `idx_created_at` (`created_at`),
+  ADD KEY `idx_email` (`email`);
 
 --
 -- Indexes for table `daily_meals`
@@ -1576,10 +1696,26 @@ ALTER TABLE `resident_revenue_history`
   ADD KEY `idx_is_active` (`is_active`);
 
 --
+-- Indexes for table `resident_service_quotas`
+--
+ALTER TABLE `resident_service_quotas`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_resident_service_month` (`resident_id`,`service_name`,`month`),
+  ADD KEY `idx_resident_month` (`resident_id`,`month`);
+
+--
 -- Indexes for table `services`
 --
 ALTER TABLE `services`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `service_purchases`
+--
+ALTER TABLE `service_purchases`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `resident_id` (`resident_id`),
+  ADD KEY `idx_purchase_date` (`purchase_date`);
 
 --
 -- Indexes for table `service_requests`
@@ -1588,7 +1724,8 @@ ALTER TABLE `service_requests`
   ADD PRIMARY KEY (`id`),
   ADD KEY `service_id` (`service_id`),
   ADD KEY `assigned_staff_id` (`assigned_staff_id`),
-  ADD KEY `idx_service_requests_resident` (`resident_id`);
+  ADD KEY `idx_service_requests_resident` (`resident_id`),
+  ADD KEY `fk_service_requests_doctor` (`assigned_doctor_id`);
 
 --
 -- Indexes for table `staff`
@@ -1683,10 +1820,16 @@ ALTER TABLE `chef_usage_sessions`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `contact_messages`
+--
+ALTER TABLE `contact_messages`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `daily_meals`
 --
 ALTER TABLE `daily_meals`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
 
 --
 -- AUTO_INCREMENT for table `doctors`
@@ -1704,7 +1847,7 @@ ALTER TABLE `donations`
 -- AUTO_INCREMENT for table `expenses`
 --
 ALTER TABLE `expenses`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT for table `financial_transactions`
@@ -1716,7 +1859,7 @@ ALTER TABLE `financial_transactions`
 -- AUTO_INCREMENT for table `health_records`
 --
 ALTER TABLE `health_records`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `infrastructure`
@@ -1782,7 +1925,7 @@ ALTER TABLE `messages`
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT for table `payments`
@@ -1812,19 +1955,31 @@ ALTER TABLE `residents`
 -- AUTO_INCREMENT for table `resident_revenue_history`
 --
 ALTER TABLE `resident_revenue_history`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+
+--
+-- AUTO_INCREMENT for table `resident_service_quotas`
+--
+ALTER TABLE `resident_service_quotas`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `services`
 --
 ALTER TABLE `services`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+
+--
+-- AUTO_INCREMENT for table `service_purchases`
+--
+ALTER TABLE `service_purchases`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `service_requests`
 --
 ALTER TABLE `service_requests`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `staff`
@@ -1836,7 +1991,7 @@ ALTER TABLE `staff`
 -- AUTO_INCREMENT for table `staff_salaries`
 --
 ALTER TABLE `staff_salaries`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `users`
@@ -2024,9 +2179,22 @@ ALTER TABLE `resident_revenue_history`
   ADD CONSTRAINT `resident_revenue_history_ibfk_4` FOREIGN KEY (`processed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
+-- Constraints for table `resident_service_quotas`
+--
+ALTER TABLE `resident_service_quotas`
+  ADD CONSTRAINT `resident_service_quotas_ibfk_1` FOREIGN KEY (`resident_id`) REFERENCES `residents` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `service_purchases`
+--
+ALTER TABLE `service_purchases`
+  ADD CONSTRAINT `service_purchases_ibfk_1` FOREIGN KEY (`resident_id`) REFERENCES `residents` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `service_requests`
 --
 ALTER TABLE `service_requests`
+  ADD CONSTRAINT `fk_service_requests_doctor` FOREIGN KEY (`assigned_doctor_id`) REFERENCES `doctors` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `service_requests_ibfk_1` FOREIGN KEY (`resident_id`) REFERENCES `residents` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `service_requests_ibfk_2` FOREIGN KEY (`service_id`) REFERENCES `services` (`id`),
   ADD CONSTRAINT `service_requests_ibfk_3` FOREIGN KEY (`assigned_staff_id`) REFERENCES `staff` (`id`);
