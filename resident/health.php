@@ -27,47 +27,30 @@ if (!$resident) {
     exit();
 }
 
-// Use mock data for now to avoid database issues
-$health_records = [
-    [
-        'id' => 1,
-        'checkup_date' => '2024-01-15',
-        'blood_pressure' => '120/80',
-        'heart_rate' => 75,
-        'temperature' => 98.6,
-        'weight' => 68,
-        'height' => 165,
-        'notes' => 'Patient is in good health. Blood pressure normal.',
-        'doctor_name' => 'Dr. Michael Chen'
-    ],
-    [
-        'id' => 2,
-        'checkup_date' => '2023-12-15',
-        'blood_pressure' => '118/75',
-        'heart_rate' => 72,
-        'temperature' => 98.4,
-        'weight' => 67.5,
-        'height' => 165,
-        'notes' => 'Regular checkup. All vitals within normal range.',
-        'doctor_name' => 'Dr. Sarah Johnson'
-    ],
-    [
-        'id' => 3,
-        'checkup_date' => '2023-11-10',
-        'blood_pressure' => '122/78',
-        'heart_rate' => 78,
-        'temperature' => 98.7,
-        'weight' => 67,
-        'height' => 165,
-        'notes' => 'Minor cold symptoms. Prescribed rest and fluids.',
-        'doctor_name' => 'Dr. Michael Chen'
-    ]
-];
+// Get health records from database
+$records_query = "SELECT hr.*, 
+                  CONCAT(du.first_name, ' ', du.last_name) as doctor_name
+                  FROM health_records hr
+                  JOIN doctors d ON hr.doctor_id = d.id
+                  JOIN users du ON d.user_id = du.id
+                  WHERE hr.resident_id = :resident_id
+                  ORDER BY hr.checkup_date DESC";
+$records_stmt = $db->prepare($records_query);
+$records_stmt->bindParam(':resident_id', $resident['id']);
+$records_stmt->execute();
+$health_records = $records_stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Calculate health metrics
-$latest_record = $health_records[0];
-$bmi = round($latest_record['weight'] / (($latest_record['height'] / 100) ** 2), 1);
-$health_score = 85; // Mock calculation
+if (count($health_records) > 0) {
+    $latest_record = $health_records[0];
+    $height = 165; // Default height in cm, can be added to database later
+    $bmi = $latest_record['weight'] ? round($latest_record['weight'] / (($height / 100) ** 2), 1) : 0;
+} else {
+    $latest_record = null;
+    $bmi = 0;
+}
+
+$health_score = $resident['health_score'] ?? 0;
 ?>
 
 <!DOCTYPE html>
@@ -330,43 +313,51 @@ $health_score = 85; // Mock calculation
             <!-- Latest Vitals Card -->
             <div class="health-card">
                 <h3><i class="fas fa-heartbeat"></i> Latest Vitals</h3>
-                <div class="health-metric">
-                    <span class="metric-label">Blood Pressure</span>
-                    <span class="metric-value good"><?php echo $latest_record['blood_pressure']; ?></span>
-                </div>
-                <div class="health-metric">
-                    <span class="metric-label">Heart Rate</span>
-                    <span class="metric-value good"><?php echo $latest_record['heart_rate']; ?> bpm</span>
-                </div>
-                <div class="health-metric">
-                    <span class="metric-label">Temperature</span>
-                    <span class="metric-value good"><?php echo $latest_record['temperature']; ?>°F</span>
-                </div>
-                <div class="health-metric">
-                    <span class="metric-label">Last Checkup</span>
-                    <span class="metric-value"><?php echo date('M j, Y', strtotime($latest_record['checkup_date'])); ?></span>
-                </div>
+                <?php if ($latest_record): ?>
+                    <div class="health-metric">
+                        <span class="metric-label">Blood Pressure</span>
+                        <span class="metric-value good"><?php echo $latest_record['blood_pressure'] ?? 'N/A'; ?></span>
+                    </div>
+                    <div class="health-metric">
+                        <span class="metric-label">Heart Rate</span>
+                        <span class="metric-value good"><?php echo $latest_record['heart_rate'] ? $latest_record['heart_rate'] . ' bpm' : 'N/A'; ?></span>
+                    </div>
+                    <div class="health-metric">
+                        <span class="metric-label">Temperature</span>
+                        <span class="metric-value good"><?php echo $latest_record['temperature'] ? $latest_record['temperature'] . '°F' : 'N/A'; ?></span>
+                    </div>
+                    <div class="health-metric">
+                        <span class="metric-label">Last Checkup</span>
+                        <span class="metric-value"><?php echo date('M j, Y', strtotime($latest_record['checkup_date'])); ?></span>
+                    </div>
+                <?php else: ?>
+                    <p style="color: #666; text-align: center; padding: 20px;">No health records available</p>
+                <?php endif; ?>
             </div>
 
             <!-- Body Metrics Card -->
             <div class="health-card">
                 <h3><i class="fas fa-weight"></i> Body Metrics</h3>
-                <div class="health-metric">
-                    <span class="metric-label">Weight</span>
-                    <span class="metric-value"><?php echo $latest_record['weight']; ?> kg</span>
-                </div>
-                <div class="health-metric">
-                    <span class="metric-label">Height</span>
-                    <span class="metric-value"><?php echo $latest_record['height']; ?> cm</span>
-                </div>
-                <div class="health-metric">
-                    <span class="metric-label">BMI</span>
-                    <span class="metric-value bmi-normal"><?php echo $bmi; ?></span>
-                </div>
-                <div class="health-metric">
-                    <span class="metric-label">Status</span>
-                    <span class="metric-value bmi-normal">Normal</span>
-                </div>
+                <?php if ($latest_record): ?>
+                    <div class="health-metric">
+                        <span class="metric-label">Weight</span>
+                        <span class="metric-value"><?php echo $latest_record['weight'] ? $latest_record['weight'] . ' kg' : 'N/A'; ?></span>
+                    </div>
+                    <div class="health-metric">
+                        <span class="metric-label">Height</span>
+                        <span class="metric-value">165 cm</span>
+                    </div>
+                    <div class="health-metric">
+                        <span class="metric-label">BMI</span>
+                        <span class="metric-value bmi-normal"><?php echo $bmi; ?></span>
+                    </div>
+                    <div class="health-metric">
+                        <span class="metric-label">Status</span>
+                        <span class="metric-value bmi-normal"><?php echo $bmi < 18.5 ? 'Underweight' : ($bmi < 25 ? 'Normal' : ($bmi < 30 ? 'Overweight' : 'Obese')); ?></span>
+                    </div>
+                <?php else: ?>
+                    <p style="color: #666; text-align: center; padding: 20px;">No body metrics available</p>
+                <?php endif; ?>
             </div>
 
             <!-- Health Score Card -->
@@ -403,30 +394,39 @@ $health_score = 85; // Mock calculation
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($health_records as $record): ?>
-                    <tr>
-                        <td>
-                            <span class="date-badge">
-                                <?php echo date('M j, Y', strtotime($record['checkup_date'])); ?>
-                            </span>
-                        </td>
-                        <td>
-                            <span class="doctor-name"><?php echo htmlspecialchars($record['doctor_name']); ?></span>
-                        </td>
-                        <td>
-                            <span class="vital-good"><?php echo $record['blood_pressure']; ?></span>
-                        </td>
-                        <td>
-                            <span class="vital-good"><?php echo $record['heart_rate']; ?> bpm</span>
-                        </td>
-                        <td>
-                            <?php echo $record['weight']; ?> kg
-                        </td>
-                        <td class="notes-cell" title="<?php echo htmlspecialchars($record['notes']); ?>">
-                            <?php echo htmlspecialchars($record['notes']); ?>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
+                    <?php if (count($health_records) > 0): ?>
+                        <?php foreach ($health_records as $record): ?>
+                        <tr>
+                            <td>
+                                <span class="date-badge">
+                                    <?php echo date('M j, Y', strtotime($record['checkup_date'])); ?>
+                                </span>
+                            </td>
+                            <td>
+                                <span class="doctor-name"><?php echo htmlspecialchars($record['doctor_name']); ?></span>
+                            </td>
+                            <td>
+                                <span class="vital-good"><?php echo $record['blood_pressure'] ?? 'N/A'; ?></span>
+                            </td>
+                            <td>
+                                <span class="vital-good"><?php echo $record['heart_rate'] ? $record['heart_rate'] . ' bpm' : 'N/A'; ?></span>
+                            </td>
+                            <td>
+                                <?php echo $record['weight'] ? $record['weight'] . ' kg' : 'N/A'; ?>
+                            </td>
+                            <td class="notes-cell" title="<?php echo htmlspecialchars($record['notes'] ?? ''); ?>">
+                                <?php echo htmlspecialchars($record['notes'] ?? 'No notes'); ?>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 40px; color: #666;">
+                                <i class="fas fa-file-medical" style="font-size: 3rem; color: #dee2e6; margin-bottom: 15px; display: block;"></i>
+                                <p>No health records found. Your doctor will add records after checkups.</p>
+                            </td>
+                        </tr>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>

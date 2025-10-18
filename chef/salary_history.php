@@ -2,8 +2,8 @@
 session_start();
 require_once '../config/database.php';
 
-// Check if user is logged in and is a staff member
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Staff') {
+// Check if user is logged in and is a chef
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Chef') {
     header('Location: ../login.php');
     exit();
 }
@@ -11,29 +11,36 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Staff') {
 $database = new Database();
 $db = $database->getConnection();
 
-// Get staff information
-$staff_query = "SELECT s.*, u.first_name, u.last_name
-                FROM staff s 
-                JOIN users u ON s.user_id = u.id 
-                WHERE s.user_id = :user_id";
-$staff_stmt = $db->prepare($staff_query);
-$staff_stmt->bindParam(':user_id', $_SESSION['user_id']);
-$staff_stmt->execute();
-$staff = $staff_stmt->fetch(PDO::FETCH_ASSOC);
+// Get chef information
+$chef_query = "SELECT c.*, u.first_name, u.last_name FROM chefs c 
+               JOIN users u ON c.user_id = u.id 
+               WHERE c.user_id = :user_id";
+$chef_stmt = $db->prepare($chef_query);
+$chef_stmt->bindParam(':user_id', $_SESSION['user_id']);
+$chef_stmt->execute();
+$chef = $chef_stmt->fetch(PDO::FETCH_ASSOC);
 
-// Get salary history
-$salary_history_query = "SELECT * FROM staff_salaries 
-                         WHERE user_id = :user_id 
-                         ORDER BY salary_month DESC";
-$salary_history_stmt = $db->prepare($salary_history_query);
-$salary_history_stmt->bindParam(':user_id', $_SESSION['user_id']);
-$salary_history_stmt->execute();
-$salary_history = $salary_history_stmt->fetchAll(PDO::FETCH_ASSOC);
-
-// Calculate total earnings
+// Get salary records
+$salaries = [];
 $total_earnings = 0;
-foreach ($salary_history as $record) {
-    $total_earnings += $record['total_salary'];
+
+try {
+    $salary_query = "SELECT * FROM staff_salaries 
+                     WHERE user_id = :user_id 
+                     ORDER BY salary_month DESC";
+    $salary_stmt = $db->prepare($salary_query);
+    $salary_stmt->bindParam(':user_id', $_SESSION['user_id']);
+    $salary_stmt->execute();
+    $salaries = $salary_stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Calculate total earnings
+    foreach ($salaries as $salary) {
+        $total_earnings += $salary['total_salary'];
+    }
+} catch (PDOException $e) {
+    // Table doesn't exist yet, use empty array
+    $salaries = [];
+    $total_earnings = 0;
 }
 ?>
 
@@ -42,64 +49,47 @@ foreach ($salary_history as $record) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Salary - Maple House</title>
+    <title>Salary History</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background: #f8f9fa;
             padding: 20px;
         }
         
-        .salary-container {
+        .container {
             max-width: 1200px;
             margin: 0 auto;
         }
         
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
-            position: sticky;
-            top: 0;
-            background: #f8f9fa;
-            padding: 20px 0;
-            z-index: 10;
-        }
-        
-        @media (max-width: 1024px) {
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-        
-        @media (max-width: 600px) {
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
         }
         
         .stat-card {
             background: white;
             padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            border-left: 4px solid #28a745;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border-left: 5px solid #43e97b;
         }
         
         .stat-label {
             font-size: 0.85rem;
             color: #666;
-            margin-bottom: 8px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            margin-bottom: 8px;
         }
         
         .stat-value {
@@ -108,25 +98,21 @@ foreach ($salary_history as $record) {
             color: #2c3e50;
         }
         
-        .stat-value.currency {
-            color: #28a745;
-        }
-        
-        .section {
+        .salary-section {
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
             overflow: hidden;
-            margin-bottom: 30px;
         }
         
         .section-header {
-            background: #f8f9fa;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             padding: 20px 25px;
             border-bottom: 2px solid #e9ecef;
         }
         
         .section-header h2 {
+            margin: 0;
             color: #2c3e50;
             font-size: 1.3rem;
             display: flex;
@@ -134,28 +120,8 @@ foreach ($salary_history as $record) {
             gap: 10px;
         }
         
-        .section-content {
-            padding: 0;
-            max-height: calc(100vh - 400px);
-            overflow-y: auto;
-            position: relative;
-        }
-        
-        .section-content::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        .section-content::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-        
-        .section-content::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 4px;
-        }
-        
-        .section-content::-webkit-scrollbar-thumb:hover {
-            background: #555;
+        .table-wrapper {
+            overflow-x: auto;
         }
         
         .salary-table {
@@ -165,114 +131,103 @@ foreach ($salary_history as $record) {
         
         .salary-table thead {
             background: #f8f9fa;
-            position: sticky;
-            top: 0;
-            z-index: 5;
         }
         
         .salary-table th {
-            padding: 12px;
+            padding: 15px;
             text-align: center;
-            font-weight: 600;
             color: #2c3e50;
-            border-bottom: 2px solid #e9ecef;
+            font-weight: 600;
             font-size: 0.9rem;
-            background: #f8f9fa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #e9ecef;
             white-space: nowrap;
         }
         
         .salary-table td {
-            padding: 15px 12px;
-            border-bottom: 1px solid #e9ecef;
-            color: #495057;
+            padding: 18px 15px;
+            border-bottom: 1px solid #f1f3f5;
+            color: #2c3e50;
             text-align: center;
+        }
+        
+        .salary-table tbody tr {
+            transition: all 0.3s ease;
         }
         
         .salary-table tbody tr:hover {
-            background: #f8f9fa;
-        }
-        
-        .status-badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-        
-        .status-paid {
-            background: #d4edda;
-            color: #155724;
-        }
-        
-        .status-pending {
-            background: #fff3cd;
-            color: #856404;
-        }
-        
-        .status-partial {
-            background: #cce5ff;
-            color: #004085;
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 80px 20px;
-            color: #6c757d;
-            margin: 20px;
-        }
-        
-        .empty-state i {
-            font-size: 4rem;
-            margin-bottom: 20px;
-            opacity: 0.3;
-        }
-        
-        .empty-state h3 {
-            margin-bottom: 10px;
-            color: #495057;
+            background: linear-gradient(135deg, rgba(67, 233, 123, 0.03) 0%, rgba(56, 249, 215, 0.03) 100%);
         }
         
         .amount {
             font-weight: 600;
-            color: #28a745;
+            color: #43e97b;
+            font-size: 1.1rem;
         }
         
-        .deduction {
-            color: #dc3545;
+        .status-badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-block;
+        }
+        
+        .status-paid {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+        }
+        
+        .status-pending {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: white;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            color: #dee2e6;
+            margin-bottom: 20px;
+        }
+        
+        .empty-state p {
+            font-size: 1.1rem;
+            margin: 0;
         }
     </style>
 </head>
 <body>
-    <div class="salary-container">
+    <div class="container">
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-label">Monthly Salary</div>
-                <div class="stat-value currency">৳<?php echo number_format($staff['salary'], 2); ?></div>
-            </div>
-            
-            <div class="stat-card">
                 <div class="stat-label">Total Earnings</div>
-                <div class="stat-value currency">৳<?php echo number_format($total_earnings, 2); ?></div>
+                <div class="stat-value">৳<?php echo number_format($total_earnings); ?></div>
             </div>
-            
-            <div class="stat-card">
+            <div class="stat-card" style="border-left-color: #667eea;">
                 <div class="stat-label">Total Payments</div>
-                <div class="stat-value"><?php echo count($salary_history); ?></div>
+                <div class="stat-value"><?php echo count($salaries); ?></div>
             </div>
-            
-            <div class="stat-card">
-                <div class="stat-label">Department</div>
-                <div class="stat-value" style="font-size: 1.3rem;"><?php echo htmlspecialchars($staff['department']); ?></div>
+            <div class="stat-card" style="border-left-color: #f093fb;">
+                <div class="stat-label">Average Salary</div>
+                <div class="stat-value">৳<?php echo count($salaries) > 0 ? number_format($total_earnings / count($salaries)) : '0'; ?></div>
             </div>
         </div>
         
-        <div class="section">
+        <div class="salary-section">
             <div class="section-header">
-                <h2><i class="fas fa-history"></i> Salary History</h2>
+                <h2><i class="fas fa-list"></i> Payment Records</h2>
             </div>
-            <div class="section-content">
-                <?php if (!empty($salary_history)): ?>
+            
+            <?php if (count($salaries) > 0): ?>
+                <div class="table-wrapper">
                     <table class="salary-table">
                         <thead>
                             <tr>
@@ -285,7 +240,7 @@ foreach ($salary_history as $record) {
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($salary_history as $record): ?>
+                            <?php foreach ($salaries as $record): ?>
                                 <tr>
                                     <td>
                                         <strong><?php echo date('F Y', strtotime($record['salary_month'])); ?></strong>
@@ -302,7 +257,7 @@ foreach ($salary_history as $record) {
                                     <td class="amount">
                                         <?php echo $record['bonus'] > 0 ? '৳' . number_format($record['bonus'], 2) : '--'; ?>
                                     </td>
-                                    <td class="deduction">
+                                    <td style="color: #dc3545;">
                                         <?php echo $record['deductions'] > 0 ? '-৳' . number_format($record['deductions'], 2) : '--'; ?>
                                     </td>
                                     <td>
@@ -312,14 +267,13 @@ foreach ($salary_history as $record) {
                             <?php endforeach; ?>
                         </tbody>
                     </table>
-                <?php else: ?>
-                    <div class="empty-state">
-                        <i class="fas fa-file-invoice-dollar"></i>
-                        <h3>No Salary History</h3>
-                        <p>Your salary payment history will appear here once payments are processed.</p>
-                    </div>
-                <?php endif; ?>
-            </div>
+                </div>
+            <?php else: ?>
+                <div class="empty-state">
+                    <i class="fas fa-receipt"></i>
+                    <p>No salary records found</p>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 </body>

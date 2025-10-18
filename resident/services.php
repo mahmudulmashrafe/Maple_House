@@ -27,6 +27,60 @@ $services_stmt = $db->prepare($services_query);
 $services_stmt->execute();
 $db_services = $services_stmt->fetchAll(PDO::FETCH_ASSOC);
 
+// Define service quotas based on plan
+$service_quotas = [
+    'Basic' => [
+        'Laundry' => 10,
+        'Room Cleaning' => 10,
+        'Grocery Shopping' => 5,
+        'Emergency Care' => 2,
+        'Doctor Appointment' => 5,
+        'Transportation' => 5
+    ],
+    'Plan 1' => [
+        'Laundry' => 15,
+        'Room Cleaning' => 15,
+        'Grocery Shopping' => 10,
+        'Emergency Care' => 5,
+        'Doctor Appointment' => 10,
+        'Transportation' => 8
+    ],
+    'Plan 2' => [
+        'Laundry' => 20,
+        'Room Cleaning' => 20,
+        'Grocery Shopping' => 15,
+        'Emergency Care' => 8,
+        'Doctor Appointment' => 12,
+        'Transportation' => 10
+    ],
+    'Plan 3' => [
+        'Laundry' => 25,
+        'Room Cleaning' => 25,
+        'Grocery Shopping' => 20,
+        'Emergency Care' => 10,
+        'Doctor Appointment' => 15,
+        'Transportation' => 15
+    ],
+    'Plan 4' => [
+        'Laundry' => 999,
+        'Room Cleaning' => 999,
+        'Grocery Shopping' => 999,
+        'Emergency Care' => 999,
+        'Doctor Appointment' => 999,
+        'Transportation' => 999
+    ]
+];
+
+// Service prices (in Taka)
+$service_prices = [
+    'Laundry' => 100,
+    'Room Cleaning' => 300,
+    'Grocery Shopping' => 200,
+    'Emergency Care' => 1500,
+    'Doctor Appointment' => 100,
+    'Transportation' => 100
+];
+
 // Map services to display format with icons and custom order
 $service_icons = [
     'Laundry' => ['icon' => 'fa-tshirt', 'category' => 'Personal Care', 'order' => 1],
@@ -37,10 +91,60 @@ $service_icons = [
     'Transportation' => ['icon' => 'fa-car', 'category' => 'Transportation', 'order' => 6],
 ];
 
+// Get current month usage for this resident
+$current_month = date('Y-m');
+$usage_query = "SELECT s.service_name, COUNT(*) as used_count
+                FROM service_requests sr
+                JOIN services s ON sr.service_id = s.id
+                WHERE sr.resident_id = :resident_id 
+                AND DATE_FORMAT(sr.request_date, '%Y-%m') = :current_month
+                GROUP BY s.service_name";
+$usage_stmt = $db->prepare($usage_query);
+$usage_stmt->bindParam(':resident_id', $resident['id']);
+$usage_stmt->bindParam(':current_month', $current_month);
+$usage_stmt->execute();
+$usage_data = $usage_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Create usage map
+$service_usage_map = [];
+foreach ($usage_data as $usage) {
+    $service_usage_map[$usage['service_name']] = $usage['used_count'];
+}
+
+// Get additional quotas purchased by resident
+$additional_quota_query = "SELECT service_name, additional_quota 
+                          FROM resident_service_quotas 
+                          WHERE resident_id = :resident_id 
+                          AND month = :current_month";
+$additional_quota_stmt = $db->prepare($additional_quota_query);
+$additional_quota_stmt->bindParam(':resident_id', $resident['id']);
+$additional_quota_stmt->bindParam(':current_month', $current_month);
+$additional_quota_stmt->execute();
+$additional_quota_data = $additional_quota_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Create additional quota map
+$additional_quota_map = [];
+foreach ($additional_quota_data as $quota) {
+    $additional_quota_map[$quota['service_name']] = $quota['additional_quota'];
+}
+
+// Get plan quotas
+$plan_name = $resident['plan_name'];
+$plan_quotas = $service_quotas[$plan_name] ?? $service_quotas['Basic'];
+
 $available_services = [];
 foreach ($db_services as $service) {
     $service_name = $service['service_name'];
     $icon_data = $service_icons[$service_name] ?? ['icon' => 'fa-concierge-bell', 'category' => 'General', 'order' => 99];
+    
+    $base_quota = $plan_quotas[$service_name] ?? 0;
+    $additional = $additional_quota_map[$service_name] ?? 0;
+    $total_quota = $base_quota + $additional;
+    
+    $used = $service_usage_map[$service_name] ?? 0;
+    $remaining = max(0, $total_quota - $used);
+    $is_unlimited = ($plan_name === 'Plan 4');
+    $quota_exceeded = ($remaining == 0 && !$is_unlimited);
     
     $available_services[] = [
         'id' => $service['id'],
@@ -49,7 +153,15 @@ foreach ($db_services as $service) {
         'icon' => $icon_data['icon'],
         'category' => $icon_data['category'],
         'base_cost' => $service['base_cost'],
-        'order' => $icon_data['order']
+        'order' => $icon_data['order'],
+        'quota' => $total_quota,
+        'base_quota' => $base_quota,
+        'additional_quota' => $additional,
+        'used' => $used,
+        'remaining' => $remaining,
+        'is_unlimited' => $is_unlimited,
+        'quota_exceeded' => $quota_exceeded,
+        'price' => $service_prices[$service_name] ?? 0
     ];
 }
 
@@ -415,16 +527,11 @@ try {
 </head>
 <body>
     <div class="services-container">
-        <!-- Services Header -->
-        <div class="services-header">
-            <h1><i class="fas fa-concierge-bell"></i> Available Services</h1>
-            <p>Request services to make your stay more comfortable</p>
-        </div>
 
         <!-- Services Grid -->
         <div class="services-grid">
             <?php foreach ($available_services as $service): ?>
-            <div class="service-card">
+            <div class="service-card" style="<?php echo $service['quota_exceeded'] ? 'border: 2px solid #dc3545;' : ''; ?>">
                 <div class="service-header">
                     <div class="service-icon">
                         <i class="fas <?php echo $service['icon']; ?>"></i>
@@ -436,9 +543,52 @@ try {
                     <div class="service-description">
                         <?php echo htmlspecialchars($service['description']); ?>
                     </div>
-                    <button class="request-btn" onclick="openRequestModal('<?php echo $service['name']; ?>', <?php echo $service['id']; ?>)">
-                        <i class="fas fa-plus"></i> Request Service
-                    </button>
+                    
+                    <!-- Quota Information -->
+                    <div style="background: #f8f9fa; padding: 12px; border-radius: 8px; margin: 15px 0;">
+                        <?php if ($service['is_unlimited']): ?>
+                            <div style="text-align: center; color: #28a745; font-weight: 600;">
+                                <i class="fas fa-infinity"></i> Unlimited
+                            </div>
+                        <?php else: ?>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="color: #666; font-size: 0.9rem;">Monthly Quota:</span>
+                                <span style="font-weight: 600;"><?php echo $service['quota']; ?></span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="color: #666; font-size: 0.9rem;">Used:</span>
+                                <span style="font-weight: 600; color: #dc3545;"><?php echo $service['used']; ?></span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: #666; font-size: 0.9rem;">Remaining:</span>
+                                <span style="font-weight: 600; color: #28a745;"><?php echo $service['remaining']; ?></span>
+                            </div>
+                            
+                            <!-- Progress Bar -->
+                            <div style="background: #e9ecef; height: 8px; border-radius: 4px; margin-top: 10px; overflow: hidden;">
+                                <div style="background: <?php echo $service['quota_exceeded'] ? '#dc3545' : '#28a745'; ?>; height: 100%; width: <?php echo min(100, ($service['used'] / $service['quota']) * 100); ?>%;"></div>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                    
+                    <?php if ($service['quota_exceeded']): ?>
+                        <!-- Quota Exceeded - Show Buy Option -->
+                        <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 12px; border-radius: 8px; margin-bottom: 10px;">
+                            <div style="color: #856404; font-weight: 600; margin-bottom: 5px;">
+                                <i class="fas fa-exclamation-triangle"></i> Quota Exceeded
+                            </div>
+                            <div style="color: #856404; font-size: 0.9rem;">
+                                Buy additional service: ৳<?php echo number_format($service['price']); ?>
+                            </div>
+                        </div>
+                        <button class="request-btn" style="background: #ffc107; color: #000;" onclick="openPaymentModal('<?php echo $service['name']; ?>', <?php echo $service['id']; ?>, <?php echo $service['price']; ?>)">
+                            <i class="fas fa-shopping-cart"></i> Buy Service (৳<?php echo number_format($service['price']); ?>)
+                        </button>
+                    <?php else: ?>
+                        <button class="request-btn" onclick="openRequestModal('<?php echo $service['name']; ?>', <?php echo $service['id']; ?>)">
+                            <i class="fas fa-plus"></i> Request Service (Free)
+                        </button>
+                    <?php endif; ?>
                 </div>
             </div>
             <?php endforeach; ?>
@@ -527,7 +677,170 @@ try {
         </div>
     </div>
 
+    <!-- Payment Modal -->
+    <div id="paymentModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2 id="paymentModalTitle">Purchase Service</h2>
+                <span class="close" onclick="closePaymentModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span style="font-weight: 600;">Service:</span>
+                        <span id="paymentServiceName"></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span style="font-weight: 600;">Price:</span>
+                        <span style="color: #28a745; font-size: 1.2rem; font-weight: 700;">৳<span id="paymentPrice"></span></span>
+                    </div>
+                    <div style="background: #fff3cd; padding: 10px; border-radius: 6px; margin-top: 15px;">
+                        <small style="color: #856404;">
+                            <i class="fas fa-info-circle"></i> Your monthly quota is exceeded. Purchase to continue using this service.
+                        </small>
+                    </div>
+                </div>
+                
+                <h3 style="margin-bottom: 15px; color: #2c3e50;">Select Payment Method</h3>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                    <div class="payment-option" onclick="selectPayment('bkash')">
+                        <i class="fas fa-mobile-alt" style="font-size: 2rem; color: #e2136e;"></i>
+                        <div style="font-weight: 600; margin-top: 10px;">bKash</div>
+                    </div>
+                    <div class="payment-option" onclick="selectPayment('rocket')">
+                        <i class="fas fa-rocket" style="font-size: 2rem; color: #8b3a9c;"></i>
+                        <div style="font-weight: 600; margin-top: 10px;">Rocket</div>
+                    </div>
+                    <div class="payment-option" onclick="selectPayment('nagad')">
+                        <i class="fas fa-money-bill-wave" style="font-size: 2rem; color: #f47920;"></i>
+                        <div style="font-weight: 600; margin-top: 10px;">Nagad</div>
+                    </div>
+                    <div class="payment-option" onclick="selectPayment('visa')">
+                        <i class="fab fa-cc-visa" style="font-size: 2rem; color: #1a1f71;"></i>
+                        <div style="font-weight: 600; margin-top: 10px;">Visa Card</div>
+                    </div>
+                </div>
+                
+                <input type="hidden" id="paymentServiceId">
+                <input type="hidden" id="paymentMethod">
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .payment-option {
+            background: white;
+            border: 2px solid #e9ecef;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .payment-option:hover {
+            border-color: #667eea;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+        
+        .payment-option.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+    </style>
+
     <script>
+        let selectedPaymentMethod = '';
+        let selectedServiceId = '';
+        let selectedServicePrice = 0;
+        
+        function openPaymentModal(serviceName, serviceId, price) {
+            document.getElementById('paymentServiceName').textContent = serviceName;
+            document.getElementById('paymentPrice').textContent = price.toLocaleString();
+            document.getElementById('paymentServiceId').value = serviceId;
+            selectedServiceId = serviceId;
+            selectedServicePrice = price;
+            document.getElementById('paymentModal').style.display = 'block';
+        }
+        
+        function closePaymentModal() {
+            document.getElementById('paymentModal').style.display = 'none';
+            selectedPaymentMethod = '';
+            document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
+        }
+        
+        function selectPayment(method) {
+            selectedPaymentMethod = method;
+            document.getElementById('paymentMethod').value = method;
+            
+            // Update UI
+            document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+            
+            // Simulate realistic payment flow
+            setTimeout(() => {
+                // Show processing
+                const processingDiv = document.createElement('div');
+                processingDiv.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0,0,0,0.8);
+                    z-index: 10001;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                `;
+                processingDiv.innerHTML = `
+                    <div style="background: white; padding: 40px; border-radius: 15px; text-align: center; max-width: 400px;">
+                        <div style="width: 80px; height: 80px; margin: 0 auto 20px; border: 5px solid #f3f3f3; border-top: 5px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                        <h3 style="color: #2c3e50; margin-bottom: 10px;">Processing Payment</h3>
+                        <p style="color: #666;">Connecting to ${method.toUpperCase()} gateway...</p>
+                        <style>
+                            @keyframes spin {
+                                0% { transform: rotate(0deg); }
+                                100% { transform: rotate(360deg); }
+                            }
+                        </style>
+                    </div>
+                `;
+                document.body.appendChild(processingDiv);
+                
+                // Simulate payment processing
+                setTimeout(() => {
+                    document.body.removeChild(processingDiv);
+                    closePaymentModal();
+                    showSuccessNotification('Payment Successful!', `৳${selectedServicePrice.toLocaleString()} paid via ${method.toUpperCase()}. Service added to your account.`);
+                    setTimeout(() => location.reload(), 2000);
+                }, 2000);
+            }, 300);
+        }
+        
         function openRequestModal(serviceName, serviceId) {
             document.getElementById('modalTitle').textContent = 'Request ' + serviceName;
             document.getElementById('serviceName').value = serviceName;
@@ -578,17 +891,82 @@ try {
                 const result = await response.json();
                 
                 if (result.success) {
-                    alert('✓ ' + result.message);
                     closeRequestModal();
-                    // Reload page to show updated requests
-                    window.location.reload();
+                    showSuccessNotification('Service Requested Successfully!', 'Your request has been submitted and is pending approval.');
+                    setTimeout(() => location.reload(), 2000);
                 } else {
-                    alert('✗ Error: ' + result.message);
+                    showErrorNotification('Request Failed', result.message);
                 }
             } catch (error) {
-                alert('✗ Error submitting request. Please try again.');
                 console.error('Error:', error);
+                showErrorNotification('Error', 'An error occurred while submitting your request. Please try again.');
             }
+        }
+
+        function showSuccessNotification(title, message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: white;
+                padding: 20px 25px;
+                border-radius: 12px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+                z-index: 10000;
+                min-width: 300px;
+                border-left: 5px solid #28a745;
+                animation: slideIn 0.3s ease;
+            `;
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="width: 50px; height: 50px; background: #d4edda; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-check" style="color: #28a745; font-size: 1.5rem;"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 700; color: #2c3e50; margin-bottom: 5px;">${title}</div>
+                        <div style="color: #666; font-size: 0.9rem;">${message}</div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+        
+        function showErrorNotification(title, message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: white;
+                padding: 20px 25px;
+                border-radius: 12px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+                z-index: 10000;
+                min-width: 300px;
+                border-left: 5px solid #dc3545;
+                animation: slideIn 0.3s ease;
+            `;
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="width: 50px; height: 50px; background: #f8d7da; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-times" style="color: #dc3545; font-size: 1.5rem;"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 700; color: #2c3e50; margin-bottom: 5px;">${title}</div>
+                        <div style="color: #666; font-size: 0.9rem;">${message}</div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
         }
 
         // Close modal when clicking outside

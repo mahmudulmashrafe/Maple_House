@@ -396,6 +396,8 @@ try {
 
         /* Sidebar Footer */
         .sidebar-footer {
+            margin-top: auto;
+            margin-bottom: 20px;
             border-top: 1px solid rgba(0,0,0,0.1);
             padding: 20px;
             white-space: nowrap;

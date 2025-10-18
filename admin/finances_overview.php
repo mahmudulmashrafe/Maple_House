@@ -89,10 +89,25 @@ try {
         $stats['total_payment_count'] = $resident_result['total_payment_count'];
     }
     
-    // Calculate total revenue (resident payments + donations) based on filter type
+    // Get service revenue from service purchases
+    if ($filter_type === 'all_time') {
+        $service_revenue_query = "SELECT COALESCE(SUM(total_price), 0) as service_revenue FROM service_purchases";
+        $service_revenue_stmt = $db->prepare($service_revenue_query);
+        $service_revenue_stmt->execute();
+    } else {
+        $service_revenue_query = "SELECT COALESCE(SUM(total_price), 0) as service_revenue 
+                                  FROM service_purchases 
+                                  WHERE DATE_FORMAT(purchase_date, '%Y-%m') = ?";
+        $service_revenue_stmt = $db->prepare($service_revenue_query);
+        $service_revenue_stmt->execute([$filter_month]);
+    }
+    $service_result = $service_revenue_stmt->fetch(PDO::FETCH_ASSOC);
+    $stats['service_revenue'] = $service_result ? $service_result['service_revenue'] : 0;
+    
+    // Calculate total revenue (resident payments + donations + service revenue) based on filter type
     if ($filter_type === 'all_time') {
         // For all time: use total amounts
-        $stats['total_revenue'] = $stats['monthly_resident_payments'] + $stats['total_donations_amount'];
+        $stats['total_revenue'] = $stats['monthly_resident_payments'] + $stats['total_donations_amount'] + $stats['service_revenue'];
         $stats['monthly_revenue'] = $stats['total_revenue']; // Keep this for compatibility
         $stats['yearly_revenue'] = $stats['yearly_donations'] + $stats['yearly_resident_payments'];
         
@@ -109,10 +124,11 @@ try {
         
         $stats['net_income'] = $stats['total_revenue'] - $stats['total_expenses'];
     } else {
-        // For monthly: use monthly amounts
-        $stats['total_revenue'] = $stats['monthly_resident_payments'] + $stats['monthly_donations'];
-        $stats['monthly_revenue'] = $stats['total_revenue']; // Keep this for compatibility
-        $stats['yearly_revenue'] = $stats['yearly_donations'] + ($stats['monthly_resident_payments'] * 12); // Estimate yearly
+        // For monthly/yearly: use monthly amounts
+        $stats['monthly_revenue'] = $stats['monthly_resident_payments'] + $stats['monthly_donations'] + $stats['service_revenue'];
+        $stats['yearly_revenue'] = $stats['yearly_resident_payments'] + $stats['yearly_donations'];
+        $stats['total_revenue'] = $stats['monthly_revenue']; // Keep for compatibility
+        
         // Get real expenses from expense system
         try {
             $expenses_query = "SELECT SUM(amount) as total_expenses FROM expenses WHERE status IN ('approved', 'paid') AND DATE_FORMAT(expense_date, '%Y-%m') = ?";
@@ -221,7 +237,7 @@ try {
         
         .finance-buttons {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
+            grid-template-columns: repeat(6, 1fr);
             gap: 15px;
             margin-bottom: 30px;
         }
@@ -280,6 +296,10 @@ try {
         
         .finance-card.net-income {
             border-color: #fa709a;
+        }
+        
+        .finance-card.service-revenue {
+            border-color: #ffa502;
         }
         
         .finance-card i {
@@ -512,7 +532,15 @@ try {
             <div class="finance-desc"><?php echo $filter_type === 'all_time' ? 'Total donation amount' : 'Monthly donation amount'; ?></div>
         </a>
         
-        <!-- 3. Total Revenue -->
+        <!-- 3. Service Revenue -->
+        <a href="service_revenue.php?month=<?php echo $filter_type === 'all_time' ? 'all' : $filter_month; ?>" class="finance-card service-revenue">
+            <i class="fas fa-shopping-cart"></i>
+            <div class="finance-amount">৳<?php echo number_format($stats['service_revenue']); ?></div>
+            <div class="finance-label">Service Revenue</div>
+            <div class="finance-desc"><?php echo $filter_type === 'all_time' ? 'Total service purchases' : 'Monthly service purchases'; ?></div>
+        </a>
+        
+        <!-- 4. Total Revenue -->
         <div class="finance-card revenue">
             <i class="fas fa-chart-line"></i>
             <div class="finance-amount">৳<?php echo number_format($stats['total_revenue']); ?></div>

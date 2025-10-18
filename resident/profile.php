@@ -25,6 +25,88 @@ if (!$resident) {
     header("Location: ../login.php");
     exit();
 }
+
+// Handle personal info update
+$message = '';
+$message_type = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
+    $first_name = $_POST['first_name'];
+    $last_name = $_POST['last_name'];
+    $phone = $_POST['phone'];
+    $date_of_birth = $_POST['date_of_birth'];
+    $gender = $_POST['gender'];
+    
+    try {
+        $update_query = "UPDATE users SET first_name = :first_name, last_name = :last_name, 
+                        phone = :phone, date_of_birth = :date_of_birth, gender = :gender 
+                        WHERE id = :user_id";
+        $update_stmt = $db->prepare($update_query);
+        $update_stmt->bindParam(':first_name', $first_name);
+        $update_stmt->bindParam(':last_name', $last_name);
+        $update_stmt->bindParam(':phone', $phone);
+        $update_stmt->bindParam(':date_of_birth', $date_of_birth);
+        $update_stmt->bindParam(':gender', $gender);
+        $update_stmt->bindParam(':user_id', $_SESSION['user_id']);
+        
+        if ($update_stmt->execute()) {
+            $message = "Profile updated successfully!";
+            $message_type = "success";
+            // Refresh resident data
+            $resident_stmt->execute();
+            $resident = $resident_stmt->fetch(PDO::FETCH_ASSOC);
+        } else {
+            $message = "Failed to update profile.";
+            $message_type = "error";
+        }
+    } catch (PDOException $e) {
+        $message = "Error: " . $e->getMessage();
+        $message_type = "error";
+    }
+}
+
+// Handle password reset
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_password'])) {
+    $current_password = $_POST['current_password'];
+    $new_password = $_POST['new_password'];
+    $confirm_password = $_POST['confirm_password'];
+    
+    // Verify current password
+    $user_query = "SELECT password FROM users WHERE id = :user_id";
+    $user_stmt = $db->prepare($user_query);
+    $user_stmt->bindParam(':user_id', $_SESSION['user_id']);
+    $user_stmt->execute();
+    $user = $user_stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (password_verify($current_password, $user['password'])) {
+        if ($new_password === $confirm_password) {
+            if (strlen($new_password) >= 6) {
+                $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+                $update_query = "UPDATE users SET password = :password WHERE id = :user_id";
+                $update_stmt = $db->prepare($update_query);
+                $update_stmt->bindParam(':password', $hashed_password);
+                $update_stmt->bindParam(':user_id', $_SESSION['user_id']);
+                
+                if ($update_stmt->execute()) {
+                    $message = "Password updated successfully!";
+                    $message_type = "success";
+                } else {
+                    $message = "Failed to update password.";
+                    $message_type = "error";
+                }
+            } else {
+                $message = "New password must be at least 6 characters long.";
+                $message_type = "error";
+            }
+        } else {
+            $message = "New passwords do not match.";
+            $message_type = "error";
+        }
+    } else {
+        $message = "Current password is incorrect.";
+        $message_type = "error";
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -39,141 +121,76 @@ if (!$resident) {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #f8f9fa;
             padding: 20px;
-            line-height: 1.6;
         }
 
         .profile-container {
-            max-width: 1000px;
+            max-width: 800px;
             margin: 0 auto;
         }
 
-        .profile-header {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            margin-bottom: 25px;
-            text-align: center;
-        }
-
-        .profile-avatar {
-            width: 100px;
-            height: 100px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 20px;
-            font-size: 2.5rem;
-            color: white;
-        }
-
-        .profile-header h1 {
-            color: #2c3e50;
-            margin-bottom: 5px;
-        }
-
-        .profile-header p {
-            color: #6c757d;
-            margin-bottom: 15px;
-        }
-
-        .profile-badges {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .badge {
-            padding: 6px 12px;
-            border-radius: 15px;
-            font-size: 0.8rem;
-            font-weight: 500;
-        }
-
-        .badge-resident {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-        }
-
-        .badge-plan {
-            background: #e9ecef;
-            color: #495057;
-        }
-
-        .badge-room {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        /* Profile Sections */
-        .profile-sections {
+        .info-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 25px;
-        }
-
-        .section-card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-
-        .section-header {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            padding: 20px 25px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .section-header h2 {
-            margin: 0;
-            font-size: 1.2rem;
-        }
-
-        .section-body {
-            padding: 25px;
-        }
-
-        .info-group {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
             margin-bottom: 20px;
         }
 
-        .info-group:last-child {
-            margin-bottom: 0;
+        .info-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
         }
 
+        .info-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+
+        .info-card:nth-child(2) { border-left-color: #f093fb; }
+        .info-card:nth-child(3) { border-left-color: #43e97b; }
+        .info-card:nth-child(4) { border-left-color: #fa709a; }
+        .info-card:nth-child(5) { border-left-color: #fee140; }
+        .info-card:nth-child(6) { border-left-color: #38f9d7; }
+
         .info-label {
+            font-size: 0.75rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
             font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 5px;
-            display: block;
         }
 
         .info-value {
-            color: #6c757d;
-            padding: 8px 0;
-            border-bottom: 1px solid #f0f0f0;
+            font-size: 1.1rem;
+            color: #2c3e50;
+            font-weight: 500;
         }
 
-        .info-value:last-child {
-            border-bottom: none;
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
 
-        /* Edit Form */
-        .edit-form {
-            display: none;
+        .section h2 {
+            color: #2c3e50;
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .form-group {
@@ -182,405 +199,187 @@ if (!$resident) {
 
         .form-group label {
             display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
+            margin-bottom: 8px;
             color: #2c3e50;
+            font-weight: 600;
+            font-size: 0.9rem;
         }
 
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
+        .form-group input {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 1rem;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
         }
 
-        .form-group textarea {
-            height: 80px;
-            resize: vertical;
-        }
-
-        .form-actions {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-            margin-top: 20px;
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
         .btn {
-            padding: 10px 20px;
+            padding: 12px 24px;
             border: none;
-            border-radius: 6px;
-            cursor: pointer;
+            border-radius: 8px;
+            font-size: 0.95rem;
             font-weight: 600;
+            cursor: pointer;
             transition: all 0.3s ease;
-            text-decoration: none;
             display: inline-flex;
             align-items: center;
             gap: 8px;
         }
 
         .btn-primary {
-            background: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
         }
 
         .btn-primary:hover {
-            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
 
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-
-        .btn-success {
-            background: #28a745;
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #218838;
-        }
-
-        /* Plan Details */
-        .plan-details {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 10px;
-        }
-
-        .plan-feature {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 5px 0;
-            border-bottom: 1px solid #e9ecef;
-        }
-
-        .plan-feature:last-child {
-            border-bottom: none;
-        }
-
-        .plan-feature-name {
-            color: #2c3e50;
-        }
-
-        .plan-feature-value {
-            color: #667eea;
-            font-weight: 600;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-
-            .profile-sections {
-                grid-template-columns: 1fr;
-            }
-
-            .profile-badges {
-                justify-content: center;
-            }
-
-            .form-actions {
-                flex-direction: column;
-            }
-        }
-
-        /* Success Message */
-        .success-message {
-            background: #d4edda;
-            color: #155724;
-            padding: 15px;
+        .message {
+            padding: 12px 20px;
             border-radius: 8px;
             margin-bottom: 20px;
-            display: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        @media (max-width: 768px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <div class="profile-container">
-        <!-- Profile Header -->
-        <div class="profile-header">
-            <div class="profile-avatar">
-                <i class="fas fa-user"></i>
-            </div>
-            <h1><?php echo htmlspecialchars($resident['first_name'] . ' ' . $resident['last_name']); ?></h1>
-            <p>Resident since <?php echo date('M Y', strtotime($resident['created_at'] ?? '2023-01-01')); ?></p>
-            <div class="profile-badges">
-                <span class="badge badge-resident">Resident</span>
-                <span class="badge badge-plan"><?php echo htmlspecialchars($resident['plan_name']); ?></span>
-                <span class="badge badge-room">Room <?php echo htmlspecialchars($resident['room_number']); ?></span>
+        <!-- Personal Information -->
+        <div class="section">
+            <h2><i class="fas fa-user"></i> Personal Information</h2>
+            
+            <?php if ($message && !isset($_POST['reset_password'])): ?>
+                <div class="message <?php echo $message_type; ?>">
+                    <i class="fas fa-<?php echo $message_type === 'success' ? 'check-circle' : 'exclamation-circle'; ?>"></i>
+                    <?php echo $message; ?>
+                </div>
+            <?php endif; ?>
+            
+            <form method="POST">
+                <div class="info-grid">
+                    <div class="form-group">
+                        <label for="first_name">First Name</label>
+                        <input type="text" name="first_name" id="first_name" value="<?php echo htmlspecialchars($resident['first_name']); ?>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="last_name">Last Name</label>
+                        <input type="text" name="last_name" id="last_name" value="<?php echo htmlspecialchars($resident['last_name']); ?>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email_display">Email (Read-only)</label>
+                        <input type="email" id="email_display" value="<?php echo htmlspecialchars($resident['email']); ?>" readonly style="background: #f8f9fa; cursor: not-allowed;">
+                    </div>
+                    <div class="form-group">
+                        <label for="room_display">Room Number (Read-only)</label>
+                        <input type="text" id="room_display" value="Room <?php echo htmlspecialchars($resident['room_number']); ?>" readonly style="background: #f8f9fa; cursor: not-allowed;">
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone</label>
+                        <input type="tel" name="phone" id="phone" value="<?php echo htmlspecialchars($resident['phone'] ?? ''); ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="date_of_birth">Date of Birth</label>
+                        <input type="date" name="date_of_birth" id="date_of_birth" value="<?php echo $resident['date_of_birth']; ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="gender">Gender</label>
+                        <select name="gender" id="gender" style="width: 100%; padding: 12px; border: 2px solid #e9ecef; border-radius: 8px; font-size: 0.95rem;">
+                            <option value="Male" <?php echo ($resident['gender'] ?? '') === 'Male' ? 'selected' : ''; ?>>Male</option>
+                            <option value="Female" <?php echo ($resident['gender'] ?? '') === 'Female' ? 'selected' : ''; ?>>Female</option>
+                            <option value="Other" <?php echo ($resident['gender'] ?? '') === 'Other' ? 'selected' : ''; ?>>Other</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" name="update_profile" class="btn btn-primary" style="margin-top: 10px;">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+            </form>
+        </div>
+
+        <!-- Plan Information -->
+        <div class="section">
+            <h2><i class="fas fa-home"></i> Plan Information</h2>
+            <div class="info-grid">
+                <div class="info-card">
+                    <div class="info-label">Plan Name</div>
+                    <div class="info-value"><?php echo htmlspecialchars($resident['plan_name']); ?></div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Monthly Fee</div>
+                    <div class="info-value">৳<?php echo number_format($resident['monthly_fee']); ?></div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Laundry Limit</div>
+                    <div class="info-value"><?php echo $resident['laundry_limit']; ?> times/month</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Cleaning Limit</div>
+                    <div class="info-value"><?php echo $resident['cleaning_limit']; ?> times/month</div>
+                </div>
             </div>
         </div>
 
-        <!-- Success Message -->
-        <div id="successMessage" class="success-message">
-            <i class="fas fa-check-circle"></i> Profile updated successfully!
-        </div>
-
-        <!-- Profile Sections -->
-        <div class="profile-sections">
-            <!-- Personal Information -->
-            <div class="section-card">
-                <div class="section-header">
-                    <i class="fas fa-user"></i>
-                    <h2>Personal Information</h2>
+        <!-- Password Reset -->
+        <div class="section">
+            <h2><i class="fas fa-lock"></i> Reset Password</h2>
+            
+            <?php if ($message): ?>
+                <div class="message <?php echo $message_type; ?>">
+                    <i class="fas fa-<?php echo $message_type === 'success' ? 'check-circle' : 'exclamation-circle'; ?>"></i>
+                    <?php echo $message; ?>
                 </div>
-                <div class="section-body">
-                    <div id="personalInfo" class="info-display">
-                        <div class="info-group">
-                            <span class="info-label">Full Name</span>
-                            <div class="info-value"><?php echo htmlspecialchars($resident['first_name'] . ' ' . $resident['last_name']); ?></div>
-                        </div>
-                        <div class="info-group">
-                            <span class="info-label">Email</span>
-                            <div class="info-value"><?php echo htmlspecialchars($resident['email']); ?></div>
-                        </div>
-                        <div class="info-group">
-                            <span class="info-label">Phone</span>
-                            <div class="info-value"><?php echo htmlspecialchars($resident['phone'] ?? 'Not provided'); ?></div>
-                        </div>
-                        <div class="info-group">
-                            <span class="info-label">Date of Birth</span>
-                            <div class="info-value"><?php echo $resident['date_of_birth'] ? date('M j, Y', strtotime($resident['date_of_birth'])) : 'Not provided'; ?></div>
-                        </div>
-                        <div class="info-group">
-                            <span class="info-label">Gender</span>
-                            <div class="info-value"><?php echo htmlspecialchars($resident['gender'] ?? 'Not specified'); ?></div>
-                        </div>
-                    </div>
-
-                    <div id="personalForm" class="edit-form">
-                        <form>
-                            <div class="form-group">
-                                <label for="firstName">First Name</label>
-                                <input type="text" id="firstName" value="<?php echo htmlspecialchars($resident['first_name']); ?>">
-                            </div>
-                            <div class="form-group">
-                                <label for="lastName">Last Name</label>
-                                <input type="text" id="lastName" value="<?php echo htmlspecialchars($resident['last_name']); ?>">
-                            </div>
-                            <div class="form-group">
-                                <label for="email">Email</label>
-                                <input type="email" id="email" value="<?php echo htmlspecialchars($resident['email']); ?>">
-                            </div>
-                            <div class="form-group">
-                                <label for="phone">Phone</label>
-                                <input type="tel" id="phone" value="<?php echo htmlspecialchars($resident['phone'] ?? ''); ?>">
-                            </div>
-                            <div class="form-group">
-                                <label for="dateOfBirth">Date of Birth</label>
-                                <input type="date" id="dateOfBirth" value="<?php echo $resident['date_of_birth']; ?>">
-                            </div>
-                            <div class="form-group">
-                                <label for="gender">Gender</label>
-                                <select id="gender">
-                                    <option value="Male" <?php echo ($resident['gender'] ?? '') === 'Male' ? 'selected' : ''; ?>>Male</option>
-                                    <option value="Female" <?php echo ($resident['gender'] ?? '') === 'Female' ? 'selected' : ''; ?>>Female</option>
-                                    <option value="Other" <?php echo ($resident['gender'] ?? '') === 'Other' ? 'selected' : ''; ?>>Other</option>
-                                </select>
-                            </div>
-                        </form>
-                    </div>
-
-                    <div class="form-actions">
-                        <button id="editPersonalBtn" class="btn btn-primary" onclick="toggleEdit('personal')">
-                            <i class="fas fa-edit"></i> Edit
-                        </button>
-                        <button id="savePersonalBtn" class="btn btn-success" onclick="savePersonal()" style="display: none;">
-                            <i class="fas fa-save"></i> Save
-                        </button>
-                        <button id="cancelPersonalBtn" class="btn btn-secondary" onclick="cancelEdit('personal')" style="display: none;">
-                            <i class="fas fa-times"></i> Cancel
-                        </button>
-                    </div>
+            <?php endif; ?>
+            
+            <form method="POST">
+                <div class="form-group">
+                    <label for="current_password">Current Password</label>
+                    <input type="password" name="current_password" id="current_password" required>
                 </div>
-            </div>
-
-            <!-- Plan & Room Information -->
-            <div class="section-card">
-                <div class="section-header">
-                    <i class="fas fa-home"></i>
-                    <h2>Plan & Room Details</h2>
+                
+                <div class="form-group">
+                    <label for="new_password">New Password</label>
+                    <input type="password" name="new_password" id="new_password" required minlength="6">
                 </div>
-                <div class="section-body">
-                    <div class="info-group">
-                        <span class="info-label">Current Plan</span>
-                        <div class="info-value"><?php echo htmlspecialchars($resident['plan_name']); ?></div>
-                        <div class="plan-details">
-                            <div class="plan-feature">
-                                <span class="plan-feature-name">Monthly Fee</span>
-                                <span class="plan-feature-value">₹<?php echo number_format($resident['monthly_fee']); ?></span>
-                            </div>
-                            <div class="plan-feature">
-                                <span class="plan-feature-name">Laundry Limit</span>
-                                <span class="plan-feature-value"><?php echo $resident['laundry_limit']; ?> times/month</span>
-                            </div>
-                            <div class="plan-feature">
-                                <span class="plan-feature-name">Cleaning Limit</span>
-                                <span class="plan-feature-value"><?php echo $resident['cleaning_limit']; ?> times/month</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="info-group">
-                        <span class="info-label">Room Number</span>
-                        <div class="info-value">Room <?php echo htmlspecialchars($resident['room_number']); ?></div>
-                    </div>
-                    <div class="info-group">
-                        <span class="info-label">Move-in Date</span>
-                        <div class="info-value"><?php echo $resident['move_in_date'] ? date('M j, Y', strtotime($resident['move_in_date'])) : 'Not available'; ?></div>
-                    </div>
+                
+                <div class="form-group">
+                    <label for="confirm_password">Confirm New Password</label>
+                    <input type="password" name="confirm_password" id="confirm_password" required minlength="6">
                 </div>
-            </div>
-
-            <!-- Emergency Contact -->
-            <div class="section-card">
-                <div class="section-header">
-                    <i class="fas fa-phone"></i>
-                    <h2>Emergency Contact</h2>
-                </div>
-                <div class="section-body">
-                    <div id="emergencyInfo" class="info-display">
-                        <div class="info-group">
-                            <span class="info-label">Contact Name</span>
-                            <div class="info-value"><?php echo htmlspecialchars($resident['emergency_contact_name'] ?? 'Not provided'); ?></div>
-                        </div>
-                        <div class="info-group">
-                            <span class="info-label">Contact Phone</span>
-                            <div class="info-value"><?php echo htmlspecialchars($resident['emergency_contact_phone'] ?? 'Not provided'); ?></div>
-                        </div>
-                        <div class="info-group">
-                            <span class="info-label">Relationship</span>
-                            <div class="info-value"><?php echo htmlspecialchars($resident['emergency_contact_relationship'] ?? 'Not specified'); ?></div>
-                        </div>
-                    </div>
-
-                    <div id="emergencyForm" class="edit-form">
-                        <form>
-                            <div class="form-group">
-                                <label for="emergencyName">Contact Name</label>
-                                <input type="text" id="emergencyName" value="<?php echo htmlspecialchars($resident['emergency_contact_name'] ?? ''); ?>">
-                            </div>
-                            <div class="form-group">
-                                <label for="emergencyPhone">Contact Phone</label>
-                                <input type="tel" id="emergencyPhone" value="<?php echo htmlspecialchars($resident['emergency_contact_phone'] ?? ''); ?>">
-                            </div>
-                            <div class="form-group">
-                                <label for="emergencyRelationship">Relationship</label>
-                                <input type="text" id="emergencyRelationship" value="<?php echo htmlspecialchars($resident['emergency_contact_relationship'] ?? ''); ?>">
-                            </div>
-                        </form>
-                    </div>
-
-                    <div class="form-actions">
-                        <button id="editEmergencyBtn" class="btn btn-primary" onclick="toggleEdit('emergency')">
-                            <i class="fas fa-edit"></i> Edit
-                        </button>
-                        <button id="saveEmergencyBtn" class="btn btn-success" onclick="saveEmergency()" style="display: none;">
-                            <i class="fas fa-save"></i> Save
-                        </button>
-                        <button id="cancelEmergencyBtn" class="btn btn-secondary" onclick="cancelEdit('emergency')" style="display: none;">
-                            <i class="fas fa-times"></i> Cancel
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Preferences -->
-            <div class="section-card">
-                <div class="section-header">
-                    <i class="fas fa-cog"></i>
-                    <h2>Preferences</h2>
-                </div>
-                <div class="section-body">
-                    <div class="info-group">
-                        <span class="info-label">Dietary Restrictions</span>
-                        <div class="info-value"><?php echo htmlspecialchars($resident['dietary_restrictions'] ?? 'None specified'); ?></div>
-                    </div>
-                    <div class="info-group">
-                        <span class="info-label">Medical Notes</span>
-                        <div class="info-value"><?php echo htmlspecialchars($resident['medical_notes'] ?? 'None provided'); ?></div>
-                    </div>
-                    <div class="info-group">
-                        <span class="info-label">Special Requests</span>
-                        <div class="info-value"><?php echo htmlspecialchars($resident['special_requests'] ?? 'None'); ?></div>
-                    </div>
-                    
-                    <div class="form-actions">
-                        <button class="btn btn-primary" onclick="editPreferences()">
-                            <i class="fas fa-edit"></i> Edit Preferences
-                        </button>
-                    </div>
-                </div>
-            </div>
+                
+                <button type="submit" name="reset_password" class="btn btn-primary">
+                    <i class="fas fa-key"></i> Update Password
+                </button>
+            </form>
         </div>
     </div>
-
-    <script>
-        function toggleEdit(section) {
-            const infoDiv = document.getElementById(section + 'Info');
-            const formDiv = document.getElementById(section + 'Form');
-            const editBtn = document.getElementById('edit' + section.charAt(0).toUpperCase() + section.slice(1) + 'Btn');
-            const saveBtn = document.getElementById('save' + section.charAt(0).toUpperCase() + section.slice(1) + 'Btn');
-            const cancelBtn = document.getElementById('cancel' + section.charAt(0).toUpperCase() + section.slice(1) + 'Btn');
-
-            infoDiv.style.display = 'none';
-            formDiv.style.display = 'block';
-            editBtn.style.display = 'none';
-            saveBtn.style.display = 'inline-flex';
-            cancelBtn.style.display = 'inline-flex';
-        }
-
-        function cancelEdit(section) {
-            const infoDiv = document.getElementById(section + 'Info');
-            const formDiv = document.getElementById(section + 'Form');
-            const editBtn = document.getElementById('edit' + section.charAt(0).toUpperCase() + section.slice(1) + 'Btn');
-            const saveBtn = document.getElementById('save' + section.charAt(0).toUpperCase() + section.slice(1) + 'Btn');
-            const cancelBtn = document.getElementById('cancel' + section.charAt(0).toUpperCase() + section.slice(1) + 'Btn');
-
-            infoDiv.style.display = 'block';
-            formDiv.style.display = 'none';
-            editBtn.style.display = 'inline-flex';
-            saveBtn.style.display = 'none';
-            cancelBtn.style.display = 'none';
-        }
-
-        function savePersonal() {
-            // Here you would typically send the data to a PHP script
-            // For now, we'll just show a success message
-            showSuccessMessage();
-            cancelEdit('personal');
-        }
-
-        function saveEmergency() {
-            // Here you would typically send the data to a PHP script
-            // For now, we'll just show a success message
-            showSuccessMessage();
-            cancelEdit('emergency');
-        }
-
-        function editPreferences() {
-            alert('Preferences editor would open here.\n\nThis would allow you to update dietary restrictions, medical notes, and special requests.');
-        }
-
-        function showSuccessMessage() {
-            const successMessage = document.getElementById('successMessage');
-            successMessage.style.display = 'block';
-            setTimeout(() => {
-                successMessage.style.display = 'none';
-            }, 3000);
-        }
-    </script>
 </body>
 </html>

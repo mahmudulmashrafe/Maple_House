@@ -50,13 +50,18 @@ $usage_stmt->execute();
 $service_usage = $usage_stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Calculate health score (example calculation)
-$health_score = 85; // This would be calculated based on actual health data
-if ($latest_health) {
+$health_score = $resident['health_score'] ?? 85;
+if ($latest_health && isset($latest_health['blood_pressure'])) {
+    // Parse blood pressure (e.g., "120/80")
+    $bp_parts = explode('/', $latest_health['blood_pressure']);
+    $systolic = isset($bp_parts[0]) ? (int)$bp_parts[0] : 0;
+    $diastolic = isset($bp_parts[1]) ? (int)$bp_parts[1] : 0;
+    
     // Simple calculation based on available data
     $health_score = min(100, max(0, 
-        ($latest_health['blood_pressure_systolic'] < 140 ? 25 : 0) +
-        ($latest_health['blood_pressure_diastolic'] < 90 ? 25 : 0) +
-        ($latest_health['heart_rate'] >= 60 && $latest_health['heart_rate'] <= 100 ? 25 : 0) +
+        ($systolic > 0 && $systolic < 140 ? 25 : 0) +
+        ($diastolic > 0 && $diastolic < 90 ? 25 : 0) +
+        (isset($latest_health['heart_rate']) && $latest_health['heart_rate'] >= 60 && $latest_health['heart_rate'] <= 100 ? 25 : 0) +
         25 // Base score
     ));
 }
@@ -540,9 +545,9 @@ if ($latest_health) {
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link" onclick="loadPage('communication.php'); return false;">
-                        <i class="fas fa-comments"></i>
-                        <span>Communication</span>
+                    <a href="#" class="nav-link" onclick="loadPage('buy_services.php'); return false;">
+                        <i class="fas fa-shopping-bag"></i>
+                        <span>Buy Services</span>
                     </a>
                 </li>
                 <li class="nav-item">
@@ -572,65 +577,65 @@ if ($latest_health) {
             <div class="content-body">
                 <!-- Dashboard Content -->
                 <div class="dashboard-content" id="dashboard-content">
+                    <!-- Welcome Section -->
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 15px; color: white; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                        <h1 style="margin: 0 0 10px 0; font-size: 2rem; font-weight: 700;">Welcome back, <?php echo htmlspecialchars($resident['first_name']); ?>! 👋</h1>
+                        <p style="margin: 0; font-size: 1.1rem; opacity: 0.9;">Room <?php echo htmlspecialchars($resident['room_number']); ?> • <?php echo htmlspecialchars($resident['plan_name']); ?> Plan</p>
+                    </div>
+
                     <!-- Stats Grid -->
-                    <div class="stats-grid">
+                    <div class="stats-grid" style="margin-bottom: 35px;">
                         <!-- Health Card -->
-                        <div class="stat-card">
+                        <div class="stat-card" style="border-left: 4px solid #667eea;">
                             <div class="stat-card-header">
-                                <div class="stat-card-icon health">
+                                <div class="stat-card-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                                     <i class="fas fa-heartbeat"></i>
                                 </div>
-                                <div>
+                                <div style="flex: 1;">
                                     <div class="stat-card-title">Health Score</div>
+                                    <div class="stat-card-value" style="font-size: 2rem; color: #667eea;"><?php echo $health_score; ?>%</div>
                                     <div class="stat-card-subtitle">Overall wellness</div>
-                                </div>
-                                <div class="health-progress">
-                                    <svg class="progress-circle">
-                                        <circle class="progress-circle-bg" cx="40" cy="40" r="30"></circle>
-                                        <circle class="progress-circle-fill" cx="40" cy="40" r="30" data-score="<?php echo $health_score; ?>"></circle>
-                                    </svg>
-                                    <div class="progress-text"><?php echo $health_score; ?>%</div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Plan Card -->
-                        <div class="stat-card">
+                        <div class="stat-card" style="border-left: 4px solid #f093fb;">
                             <div class="stat-card-header">
-                                <div class="stat-card-icon plan">
+                                <div class="stat-card-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
                                     <i class="fas fa-crown"></i>
                                 </div>
-                                <div>
+                                <div style="flex: 1;">
                                     <div class="stat-card-title"><?php echo htmlspecialchars($resident['plan_name']); ?></div>
-                                    <div class="stat-card-value">₹<?php echo number_format($resident['monthly_fee']); ?></div>
+                                    <div class="stat-card-value" style="font-size: 2rem; color: #f093fb;">৳<?php echo number_format($resident['monthly_fee']); ?></div>
                                     <div class="stat-card-subtitle">Monthly plan</div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Services Card -->
-                        <div class="stat-card">
+                        <div class="stat-card" style="border-left: 4px solid #43e97b;">
                             <div class="stat-card-header">
-                                <div class="stat-card-icon services">
+                                <div class="stat-card-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
                                     <i class="fas fa-concierge-bell"></i>
                                 </div>
-                                <div>
+                                <div style="flex: 1;">
                                     <div class="stat-card-title">Services Used</div>
-                                    <div class="stat-card-value"><?php echo count($service_usage); ?></div>
+                                    <div class="stat-card-value" style="font-size: 2rem; color: #43e97b;"><?php echo count($service_usage); ?></div>
                                     <div class="stat-card-subtitle">This month</div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Last Checkup Card -->
-                        <div class="stat-card">
+                        <div class="stat-card" style="border-left: 4px solid #fa709a;">
                             <div class="stat-card-header">
-                                <div class="stat-card-icon meals">
+                                <div class="stat-card-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
                                     <i class="fas fa-stethoscope"></i>
                                 </div>
-                                <div>
+                                <div style="flex: 1;">
                                     <div class="stat-card-title">Last Checkup</div>
-                                    <div class="stat-card-value">
+                                    <div class="stat-card-value" style="font-size: 1.5rem; color: #fa709a;">
                                         <?php 
                                         if ($latest_health) {
                                             echo date('M j', strtotime($latest_health['checkup_date']));
@@ -653,25 +658,6 @@ if ($latest_health) {
                         </div>
                     </div>
 
-                    <!-- Quick Actions -->
-                    <div class="quick-actions">
-                        <a href="#" class="quick-action" onclick="loadPage('meals.php'); return false;">
-                            <i class="fas fa-utensils"></i>
-                            <span>Today's Menu</span>
-                        </a>
-                        <a href="#" class="quick-action" onclick="loadPage('services.php'); return false;">
-                            <i class="fas fa-plus-circle"></i>
-                            <span>Request Service</span>
-                        </a>
-                        <a href="#" class="quick-action" onclick="loadPage('health.php'); return false;">
-                            <i class="fas fa-chart-line"></i>
-                            <span>Health Reports</span>
-                        </a>
-                        <a href="#" class="quick-action" onclick="loadPage('communication.php'); return false;">
-                            <i class="fas fa-video"></i>
-                            <span>Family Call</span>
-                        </a>
-                    </div>
                 </div>
 
                 <!-- Page Content -->
@@ -765,9 +751,9 @@ if ($latest_health) {
                     title = 'Services';
                     subtitle = 'Request and manage facility services';
                     break;
-                case 'communication.php':
-                    title = 'Communication';
-                    subtitle = 'Messages and family video calls';
+                case 'buy_services.php':
+                    title = 'Buy Services';
+                    subtitle = 'Purchase additional service packs';
                     break;
                 case 'profile.php':
                     title = 'Profile Settings';
@@ -841,7 +827,7 @@ if ($latest_health) {
             const currentPage = urlParams.get('page');
             
             if (currentPage && currentPage !== 'dashboard') {
-                const validPages = ['health', 'meals', 'services', 'communication', 'profile'];
+                const validPages = ['health', 'meals', 'services', 'buy_services', 'profile'];
                 if (validPages.includes(currentPage)) {
                     loadPage(currentPage + '.php', false);
                 }

@@ -194,6 +194,7 @@ $stats['meals_this_week'] = 0; // Can be calculated if needed
 
         /* Sidebar Footer */
         .sidebar-footer {
+            margin-top: auto;
             border-top: 1px solid rgba(255,255,255,0.1);
             padding: 20px;
             white-space: nowrap;
@@ -278,45 +279,126 @@ $stats['meals_this_week'] = 0; // Can be calculated if needed
         /* Stats Grid */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 25px;
+            margin-bottom: 35px;
         }
         .stat-card {
             background: white;
             padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
             display: flex;
             align-items: center;
-            gap: 15px;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            gap: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border-left: 5px solid #667eea;
         }
         .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
         }
         .stat-card i {
-            font-size: 2rem;
-            padding: 12px;
-            border-radius: 50%;
+            font-size: 2.5rem;
+            padding: 15px;
+            border-radius: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
         }
-        .stat-card:nth-child(1) i { background: #3498db; }
-        .stat-card:nth-child(2) i { background: #27ae60; }
-        .stat-card:nth-child(3) i { background: #e67e22; }
-        .stat-card:nth-child(4) i { background: #9b59b6; }
+        .stat-card:nth-child(1) { border-left-color: #667eea; }
+        .stat-card:nth-child(1) i { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        
+        .stat-card:nth-child(2) { border-left-color: #43e97b; }
+        .stat-card:nth-child(2) i { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+        
+        .stat-card:nth-child(3) { border-left-color: #fa709a; }
+        .stat-card:nth-child(3) i { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        
+        .stat-card:nth-child(4) { border-left-color: #f093fb; }
+        .stat-card:nth-child(4) i { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
         
         .stat-info h3 {
-            margin: 0 0 4px 0;
-            font-size: 1.6rem;
+            margin: 0 0 5px 0;
+            font-size: 2rem;
             color: #2c3e50;
+            font-weight: bold;
         }
         .stat-info p {
             margin: 0;
-            color: #7f8c8d;
+            color: #666;
             font-weight: 500;
             font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Quick Action Cards */
+        .quick-actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .action-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 5px solid #667eea;
+        }
+        
+        .action-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .action-card:nth-child(1) { border-left-color: #667eea; }
+        .action-card:nth-child(2) { border-left-color: #43e97b; }
+        .action-card:nth-child(3) { border-left-color: #fa709a; }
+        .action-card:nth-child(4) { border-left-color: #f093fb; }
+        
+        .action-card h4 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .action-card h4 i {
+            font-size: 1.5rem;
+        }
+        
+        .action-card:nth-child(1) h4 i { color: #667eea; }
+        .action-card:nth-child(2) h4 i { color: #43e97b; }
+        .action-card:nth-child(3) h4 i { color: #fa709a; }
+        .action-card:nth-child(4) h4 i { color: #f093fb; }
+        
+        .action-card p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .content-area h2 {
+            color: #2c3e50;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .content-area > p {
+            color: #666;
+            margin-bottom: 20px;
         }
         
     </style>
@@ -335,6 +417,8 @@ $stats['meals_this_week'] = 0; // Can be calculated if needed
                     <li><a href="?page=daily" onclick="event.preventDefault(); showPage('daily')" class="nav-link" data-page="daily"><i class="fas fa-list"></i> <span class="nav-text">Daily Menu</span></a></li>
                     <li><a href="?page=meal_items" onclick="event.preventDefault(); showPage('meal_items')" class="nav-link" data-page="meal_items"><i class="fas fa-utensils"></i> <span class="nav-text">Meal Items</span></a></li>
                     <li><a href="?page=inventory" onclick="event.preventDefault(); showPage('inventory')" class="nav-link" data-page="inventory"><i class="fas fa-boxes"></i> <span class="nav-text">Inventory</span></a></li>
+                    <li><a href="?page=salary" onclick="event.preventDefault(); showPage('salary')" class="nav-link" data-page="salary"><i class="fas fa-money-bill-wave"></i> <span class="nav-text">Salary History</span></a></li>
+                    <li><a href="?page=profile" onclick="event.preventDefault(); showPage('profile')" class="nav-link" data-page="profile"><i class="fas fa-user"></i> <span class="nav-text">Profile</span></a></li>
                 </ul>
                 
                 <div class="sidebar-footer">
@@ -364,70 +448,31 @@ $stats['meals_this_week'] = 0; // Can be calculated if needed
             <div class="content-container">
                 
                 <div class="page-section active" id="dashboard-page">
-                    <div class="welcome-section">
+                    <div class="welcome-section" style="margin-bottom: 40px;">
                         <h1 class="welcome-title">Welcome, Chef <?php echo htmlspecialchars($chef['first_name'] . ' ' . $chef['last_name']); ?>!</h1>
                         <p class="welcome-subtitle">Kitchen Operations • <?php echo htmlspecialchars($chef['shift_hours']); ?></p>
                     </div>
     
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <i class="fas fa-clipboard-list"></i>
-                            <div class="stat-info">
-                                <h3><?php echo $stats['active_meal_plans']; ?></h3>
-                                <p>Active Meal Plans</p>
-                            </div>
-                        </div>
-                        
-                        <div class="stat-card">
-                            <i class="fas fa-users"></i>
-                            <div class="stat-info">
-                                <h3><?php echo $stats['total_residents']; ?></h3>
-                                <p>Total Residents</p>
-                            </div>
-                        </div>
-                        
-                        <div class="stat-card">
-                            <i class="fas fa-money-bill-wave"></i>
-                            <div class="stat-info">
-                                <h3>৳<?php echo number_format($stats['monthly_cost']); ?></h3>
-                                <p>Monthly Food Cost</p>
-                            </div>
-                        </div>
-                        
-                        <div class="stat-card">
-                            <i class="fas fa-utensils"></i>
-                            <div class="stat-info">
-                                <h3><?php echo $stats['meals_this_week']; ?></h3>
-                                <p>Meals This Week</p>
-                            </div>
-                        </div>
-                    </div>
-    
                     <div class="content-area">
-                        <h2><i class="fas fa-home"></i> Dashboard Overview</h2>
-                        <p>Welcome to your kitchen management dashboard. Use the sidebar navigation to access different sections:</p>
-                        
-                        <div style="margin-top: 30px;">
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
-                                <div style="padding: 20px; border: 1px solid #dee2e6; border-radius: 8px; cursor: pointer;" onclick="showPage('meal_planning')">
-                                    <h4><i class="fas fa-calendar-alt"></i> Meal Planning</h4>
-                                    <p>Plan and schedule meals for residents with dietary requirements.</p>
-                                </div>
-                                
-                                <div style="padding: 20px; border: 1px solid #dee2e6; border-radius: 8px; cursor: pointer;" onclick="showPage('daily')">
-                                    <h4><i class="fas fa-list"></i> Daily Menu</h4>
-                                    <p>Manage today's menu and meal preparations.</p>
-                                </div>
-                                
-                                <div style="padding: 20px; border: 1px solid #dee2e6; border-radius: 8px; cursor: pointer;" onclick="showPage('inventory')">
-                                    <h4><i class="fas fa-boxes"></i> Inventory</h4>
-                                    <p>Track kitchen inventory and ingredient supplies.</p>
-                                </div>
-                                
-                                <div style="padding: 20px; border: 1px solid #dee2e6; border-radius: 8px; cursor: pointer;" onclick="showPage('costs')">
-                                    <h4><i class="fas fa-calculator"></i> Cost Tracking</h4>
-                                    <p>Monitor food costs and budget management.</p>
-                                </div>
+                        <div class="quick-actions-grid">
+                            <div class="action-card" onclick="showPage('meal_planning')">
+                                <h4><i class="fas fa-calendar-alt"></i> Meal Planning</h4>
+                                <p>Plan and schedule meals for residents with dietary requirements.</p>
+                            </div>
+                            
+                            <div class="action-card" onclick="showPage('daily')">
+                                <h4><i class="fas fa-list"></i> Daily Menu</h4>
+                                <p>Manage today's menu and meal preparations.</p>
+                            </div>
+                            
+                            <div class="action-card" onclick="showPage('inventory')">
+                                <h4><i class="fas fa-boxes"></i> Inventory</h4>
+                                <p>Track kitchen inventory and ingredient supplies.</p>
+                            </div>
+                            
+                            <div class="action-card" onclick="showPage('meal_items')">
+                                <h4><i class="fas fa-utensils"></i> Meal Items</h4>
+                                <p>Manage meal items database and recipes.</p>
                             </div>
                         </div>
                     </div>
@@ -450,6 +495,12 @@ $stats['meals_this_week'] = 0; // Can be calculated if needed
                 </div>
                 <div class="page-section" id="reports-page">
                     <iframe id="reports-frame" src="reports.php" style="width: 100%; height: 100%; border: none;"></iframe>
+                </div>
+                <div class="page-section" id="profile-page">
+                    <iframe id="profile-frame" src="profile.php" style="width: 100%; height: 100%; border: none;"></iframe>
+                </div>
+                <div class="page-section" id="salary-page">
+                    <iframe id="salary-frame" src="salary_history.php" style="width: 100%; height: 100%; border: none;"></iframe>
                 </div>
 
             </div>
@@ -510,6 +561,14 @@ $stats['meals_this_week'] = 0; // Can be calculated if needed
                 case 'reports':
                     title = 'Reports';
                     subtitle = 'View kitchen analytics';
+                    break;
+                case 'profile':
+                    title = 'My Profile';
+                    subtitle = 'View and update your profile';
+                    break;
+                case 'salary':
+                    title = 'Salary History';
+                    subtitle = 'View your salary records';
                     break;
                 default:
                     title = 'Chef Dashboard';

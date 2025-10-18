@@ -150,8 +150,6 @@ $stats['pending_meal_plans'] = $meal_plans_stmt->fetchColumn();
 
         .sidebar-menu {
             flex: 1;
-            display: flex;
-            flex-direction: column;
             list-style: none;
             padding: 20px 0;
             margin: 0;
@@ -192,6 +190,7 @@ $stats['pending_meal_plans'] = $meal_plans_stmt->fetchColumn();
 
         /* Sidebar Footer */
         .sidebar-footer {
+            margin-top: auto;
             border-top: 1px solid rgba(255,255,255,0.1);
             padding: 20px;
             white-space: nowrap;
@@ -402,6 +401,69 @@ $stats['pending_meal_plans'] = $meal_plans_stmt->fetchColumn();
         }
         .btn-primary { background-color: #27ae60; border-color: #27ae60; }
         .btn-primary:hover { background-color: #229954; border-color: #229954; }
+        
+        /* Welcome Section */
+        .welcome-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px;
+            border-radius: 15px;
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .welcome-title {
+            margin: 0 0 10px 0;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        
+        .welcome-subtitle {
+            margin: 0;
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        /* Quick Actions Grid */
+        .quick-actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .action-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 5px solid #667eea;
+        }
+        
+        .action-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .action-card h4 {
+            margin: 0 0 10px 0;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .action-card h4 i {
+            font-size: 1.5rem;
+        }
+        
+        .action-card p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
     </style>
 </head>
 <body>
@@ -411,21 +473,19 @@ $stats['pending_meal_plans'] = $meal_plans_stmt->fetchColumn();
                 <h2><i class="fas fa-user-md"></i><span class="nav-text"> Medical Portal</span></h2>
             </div>
             
-            <div class="sidebar-menu">
-                <ul class="nav-items">
-                    <li><a href="#" onclick="showDashboard()" class="nav-link active"><i class="fas fa-tachometer-alt"></i> <span class="nav-text">Dashboard</span></a></li>
-                    <li><a href="#" onclick="loadPage('patients.php')" class="nav-link"><i class="fas fa-users"></i> <span class="nav-text">Patients</span></a></li>
-                    <li><a href="#" onclick="loadPage('health_records.php')" class="nav-link"><i class="fas fa-file-medical"></i> <span class="nav-text">Health Records</span></a></li>
-                    <li><a href="#" onclick="loadPage('meals.php')" class="nav-link"><i class="fas fa-utensils"></i> <span class="nav-text">Meals</span></a></li>
-                    <li><a href="#" onclick="loadPage('appointments.php')" class="nav-link"><i class="fas fa-calendar-check"></i> <span class="nav-text">Appointments</span></a></li>
-                    <li><a href="#" onclick="loadPage('reports.php')" class="nav-link"><i class="fas fa-chart-line"></i> <span class="nav-text">Reports</span></a></li>
-                </ul>
-                
-                <div class="sidebar-footer">
-                    <a href="../logout.php" class="nav-link logout-btn">
-                        <i class="fas fa-sign-out-alt"></i> <span class="nav-text">Logout</span>
-                    </a>
-                </div>
+            <ul class="sidebar-menu">
+                <li><a href="#" onclick="showDashboard()" class="nav-link active"><i class="fas fa-tachometer-alt"></i> <span class="nav-text">Dashboard</span></a></li>
+                <li><a href="#" onclick="loadPage('patients.php')" class="nav-link"><i class="fas fa-users"></i> <span class="nav-text">Patients</span></a></li>
+                <li><a href="#" onclick="loadPage('health_records.php')" class="nav-link"><i class="fas fa-file-medical"></i> <span class="nav-text">Health Records</span></a></li>
+                <li><a href="#" onclick="loadPage('meals.php')" class="nav-link"><i class="fas fa-utensils"></i> <span class="nav-text">Meals</span></a></li>
+                <li><a href="#" onclick="loadPage('appointments.php')" class="nav-link"><i class="fas fa-calendar-check"></i> <span class="nav-text">Appointments</span></a></li>
+                <li><a href="#" onclick="loadPage('profile.php')" class="nav-link"><i class="fas fa-user"></i> <span class="nav-text">Profile</span></a></li>
+            </ul>
+            
+            <div class="sidebar-footer">
+                <a href="../logout.php" class="nav-link logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> <span class="nav-text">Logout</span>
+                </a>
             </div>
         </nav>
 
@@ -450,33 +510,40 @@ $stats['pending_meal_plans'] = $meal_plans_stmt->fetchColumn();
 
             <div class="content-container">
                 <div class="page-section active" id="dashboard-content">
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <i class="fas fa-users"></i>
+                    <!-- Welcome Section -->
+                    <div class="welcome-section" style="margin-bottom: 30px;">
+                        <h1 class="welcome-title">Welcome, Dr. <?php echo htmlspecialchars($doctor['first_name'] . ' ' . $doctor['last_name']); ?>!</h1>
+                        <p class="welcome-subtitle">Medical Portal • <?php echo htmlspecialchars($doctor['specialization']); ?></p>
+                    </div>
+
+                    <!-- Stats Grid -->
+                    <div class="stats-grid" style="margin-bottom: 35px;">
+                        <div class="stat-card" style="border-left-color: #667eea;">
+                            <i class="fas fa-users" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></i>
                             <div class="stat-info">
                                 <h3><?php echo $stats['total_patients']; ?></h3>
                                 <p>Total Patients</p>
                             </div>
                         </div>
                         
-                        <div class="stat-card">
-                            <i class="fas fa-calendar-day"></i>
+                        <div class="stat-card" style="border-left-color: #43e97b;">
+                            <i class="fas fa-calendar-day" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);"></i>
                             <div class="stat-info">
                                 <h3><?php echo $stats['today_appointments']; ?></h3>
                                 <p>Today's Appointments</p>
                             </div>
                         </div>
                         
-                        <div class="stat-card <?php echo $stats['needs_attention'] > 0 ? 'warning' : 'success'; ?>">
-                            <i class="fas fa-exclamation-triangle"></i>
+                        <div class="stat-card" style="border-left-color: #fa709a;">
+                            <i class="fas fa-exclamation-triangle" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);"></i>
                             <div class="stat-info">
                                 <h3><?php echo $stats['needs_attention']; ?></h3>
                                 <p>Needs Attention</p>
                             </div>
                         </div>
                         
-                        <div class="stat-card <?php echo $stats['pending_meal_plans'] > 0 ? 'warning' : 'success'; ?>">
-                            <i class="fas fa-clipboard-list"></i>
+                        <div class="stat-card" style="border-left-color: #f093fb;">
+                            <i class="fas fa-clipboard-list" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);"></i>
                             <div class="stat-info">
                                 <h3><?php echo $stats['pending_meal_plans']; ?></h3>
                                 <p>Meal Plans to Review</p>
@@ -484,103 +551,11 @@ $stats['pending_meal_plans'] = $meal_plans_stmt->fetchColumn();
                         </div>
                     </div>
 
-                    <div class="content-grid">
-                        <div class="content-main">
-                            <div class="widget">
-                                <div class="widget-header">
-                                    <h3><i class="fas fa-calendar-check"></i> Today's Appointments</h3>
-                                    <a href="#" onclick="showPage('health_records')" class="btn btn-primary btn-sm">New Checkup</a>
-                                </div>
-                                <div class="widget-content">
-                                    <?php if (!empty($today_appointments)): ?>
-                                        <div class="appointments-list">
-                                            <?php foreach ($today_appointments as $appointment): ?>
-                                                <div class="appointment-item">
-                                                    <div class="appointment-info">
-                                                        <strong><?php echo htmlspecialchars($appointment['resident_name']); ?></strong>
-                                                        <span class="room-badge">Room <?php echo htmlspecialchars($appointment['room_number']); ?></span>
-                                                    </div>
-                                                    <div class="appointment-time">
-                                                        <i class="fas fa-clock"></i> Follow-up Checkup
-                                                    </div>
-                                                    <div class="appointment-actions">
-                                                        <a href="health_record.php?id=<?php echo $appointment['id']; ?>" class="btn btn-secondary btn-sm">View Record</a>
-                                                        <a href="add_health_record.php?resident_id=<?php echo $appointment['resident_id']; ?>" class="btn btn-primary btn-sm">New Checkup</a>
-                                                    </div>
-                                                </div>
-                                            <?php endforeach; ?>
-                                        </div>
-                                    <?php else: ?>
-                                        <div class="empty-state">
-                                            <i class="fas fa-calendar"></i>
-                                            <p>No appointments scheduled for today</p>
-                                            <a href="#" onclick="showPage('appointments')" class="btn btn-primary">Schedule Appointments</a>
-                                        </div>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="content-sidebar">
-                            <div class="widget">
-                                <div class="widget-header">
-                                    <h3><i class="fas fa-file-medical"></i> Recent Records</h3>
-                                </div>
-                                <div class="widget-content">
-                                    <?php if (!empty($recent_records)): ?>
-                                        <div class="records-list">
-                                            <?php foreach (array_slice($recent_records, 0, 5) as $record): ?>
-                                                <div class="record-item">
-                                                    <div class="record-header">
-                                                        <strong><?php echo htmlspecialchars($record['resident_name']); ?></strong>
-                                                        <small><?php echo date('M j, Y', strtotime($record['checkup_date'])); ?></small>
-                                                    </div>
-                                                    <div class="record-details">
-                                                        <span>BP: <?php echo htmlspecialchars($record['blood_pressure'] ?? 'N/A'); ?></span>
-                                                        <span>HR: <?php echo $record['heart_rate'] ? $record['heart_rate'] . ' bpm' : 'N/A'; ?></span>
-                                                    </div>
-                                                </div>
-                                            <?php endforeach; ?>
-                                        </div>
-                                    <?php else: ?>
-                                        <p>No recent health records.</p>
-                                    <?php endif; ?>
-                                    <a href="#" onclick="showPage('health_records')" class="btn btn-secondary btn-sm">View All Records</a>
-                                </div>
-                            </div>
-
-                            <div class="widget">
-                                <div class="widget-header">
-                                    <h3><i class="fas fa-bell"></i> Medical Reminders</h3>
-                                </div>
-                                <div class="widget-content">
-                                    <div class="reminders-list">
-                                        <div class="reminder-item">
-                                            <i class="fas fa-calendar-check"></i>
-                                            <span>Weekly health assessments due</span>
-                                        </div>
-                                        <div class="reminder-item">
-                                            <i class="fas fa-pills"></i>
-                                            <span>Review medication dosages</span>
-                                        </div>
-                                        <div class="reminder-item">
-                                            <i class="fas fa-utensils"></i>
-                                            <span>Update meal plans for diabetic patients</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- Page Content Frame -->
                 <div class="page-section" id="page-content">
-                    <div class="page-header">
-                        <h1 id="page-title">Dashboard</h1>
-                        <p id="page-subtitle">Medical Portal Overview</p>
-                    </div>
-                    <iframe id="content-frame" src="" style="width: 100%; height: calc(100vh - 140px); border: none; display: none;"></iframe>
+                    <iframe id="content-frame" src="" style="width: 100%; height: calc(100vh - 100px); border: none; display: none;"></iframe>
                 </div>
             </div>
         </div>
@@ -640,9 +615,9 @@ $stats['pending_meal_plans'] = $meal_plans_stmt->fetchColumn();
                     title = 'Appointments';
                     subtitle = 'Manage daily and future appointments';
                     break;
-                case 'reports.php':
-                    title = 'Reports';
-                    subtitle = 'View medical and health reports';
+                case 'profile.php':
+                    title = 'My Profile';
+                    subtitle = 'View and update your profile';
                     break;
                 default:
                     title = pageUrl.replace('.php', '').split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
@@ -695,7 +670,7 @@ $stats['pending_meal_plans'] = $meal_plans_stmt->fetchColumn();
             
             if (currentPage && currentPage !== 'dashboard') {
                 const validPages = [
-                    'patients', 'health_records', 'meals', 'appointments', 'reports'
+                    'patients', 'health_records', 'meals', 'appointments', 'profile'
                 ];
                 
                 if (validPages.includes(currentPage)) {
