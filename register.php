@@ -158,7 +158,7 @@ if ($_POST && isset($_POST['register'])) {
             <?php endif; ?>
             
             <form class="auth-form register-form" method="POST" action="">
-                <h3 style="color: #2c5aa0; margin-bottom: 20px;">Personal Information</h3>
+                <h3 style="color: white; margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">Personal Information</h3>
                 
                 <div class="form-row">
                     <div class="form-group">
@@ -258,7 +258,7 @@ if ($_POST && isset($_POST['register'])) {
                     <textarea id="address" name="address" rows="3"><?php echo isset($_POST['address']) ? htmlspecialchars($_POST['address']) : ''; ?></textarea>
                 </div>
                 
-                <h3 style="color: #2c5aa0; margin: 30px 0 20px;">Emergency Contact</h3>
+                <h3 style="color: white; margin: 30px 0 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">Emergency Contact</h3>
                 
                 <div class="form-row">
                     <div class="form-group">
@@ -280,7 +280,7 @@ if ($_POST && isset($_POST['register'])) {
                     </div>
                 </div>
                 
-                <h3 style="color: #2c5aa0; margin: 30px 0 20px;">Care Plan Selection</h3>
+                <h3 style="color: white; margin: 30px 0 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">Care Plan Selection</h3>
                 
                 <div class="plan-selection">
                     <?php foreach ($payment_plans as $plan): ?>
@@ -312,7 +312,7 @@ if ($_POST && isset($_POST['register'])) {
                     <?php endforeach; ?>
                 </div>
                 
-                <h3 style="color: #2c5aa0; margin: 30px 0 20px;">Medical Information</h3>
+                <h3 style="color: white; margin: 30px 0 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">Medical Information</h3>
                 
                 <div class="form-group">
                     <label for="medical_conditions">
