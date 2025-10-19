@@ -50,7 +50,92 @@ if (count($health_records) > 0) {
     $bmi = 0;
 }
 
-$health_score = $resident['health_score'] ?? 0;
+// Calculate health score based on vital signs (0-100%)
+$health_score = 0;
+$score_details = [];
+
+if ($latest_record) {
+    // 1. Blood Pressure Score (25 points)
+    if (!empty($latest_record['blood_pressure'])) {
+        $bp_parts = explode('/', $latest_record['blood_pressure']);
+        $systolic = isset($bp_parts[0]) ? (int)$bp_parts[0] : 0;
+        $diastolic = isset($bp_parts[1]) ? (int)$bp_parts[1] : 0;
+        
+        if ($systolic > 0 && $diastolic > 0) {
+            if ($systolic < 120 && $diastolic < 80) {
+                $bp_score = 25; // Optimal
+                $score_details['bp_status'] = 'Optimal';
+            } elseif ($systolic < 140 && $diastolic < 90) {
+                $bp_score = 20; // Normal
+                $score_details['bp_status'] = 'Normal';
+            } elseif ($systolic < 160 && $diastolic < 100) {
+                $bp_score = 10; // Elevated
+                $score_details['bp_status'] = 'Elevated';
+            } else {
+                $bp_score = 5; // High
+                $score_details['bp_status'] = 'High';
+            }
+            $health_score += $bp_score;
+        }
+    }
+    
+    // 2. Heart Rate Score (25 points)
+    if (!empty($latest_record['heart_rate'])) {
+        $heart_rate = (int)$latest_record['heart_rate'];
+        if ($heart_rate >= 60 && $heart_rate <= 80) {
+            $hr_score = 25; // Optimal
+            $score_details['hr_status'] = 'Optimal';
+        } elseif ($heart_rate >= 50 && $heart_rate <= 100) {
+            $hr_score = 20; // Normal
+            $score_details['hr_status'] = 'Normal';
+        } elseif ($heart_rate >= 40 && $heart_rate <= 120) {
+            $hr_score = 10; // Elevated
+            $score_details['hr_status'] = 'Elevated';
+        } else {
+            $hr_score = 5; // Concerning
+            $score_details['hr_status'] = 'Concerning';
+        }
+        $health_score += $hr_score;
+    }
+    
+    // 3. Temperature Score (25 points)
+    if (!empty($latest_record['temperature'])) {
+        $temp = (float)$latest_record['temperature'];
+        if ($temp >= 97.0 && $temp <= 99.0) {
+            $temp_score = 25; // Normal
+            $score_details['temp_status'] = 'Normal';
+        } elseif ($temp >= 96.0 && $temp <= 100.0) {
+            $temp_score = 15; // Slightly abnormal
+            $score_details['temp_status'] = 'Slightly Abnormal';
+        } else {
+            $temp_score = 5; // Abnormal
+            $score_details['temp_status'] = 'Abnormal';
+        }
+        $health_score += $temp_score;
+    }
+    
+    // 4. BMI Score (25 points)
+    if ($bmi > 0) {
+        if ($bmi >= 18.5 && $bmi < 25) {
+            $bmi_score = 25; // Healthy weight
+            $score_details['bmi_status'] = 'Healthy Weight';
+        } elseif ($bmi >= 17 && $bmi < 30) {
+            $bmi_score = 15; // Slightly over/under
+            $score_details['bmi_status'] = ($bmi < 18.5) ? 'Slightly Underweight' : 'Slightly Overweight';
+        } else {
+            $bmi_score = 8; // Significantly over/under
+            $score_details['bmi_status'] = ($bmi < 17) ? 'Underweight' : 'Overweight';
+        }
+        $health_score += $bmi_score;
+    }
+} else {
+    // No health records available - use database value or default
+    $health_score = $resident['health_score'] ?? 0;
+    $score_details['status'] = 'No recent health records available';
+}
+
+// Ensure score is between 0-100
+$health_score = min(100, max(0, $health_score));
 ?>
 
 <!DOCTYPE html>
@@ -373,6 +458,35 @@ $health_score = $resident['health_score'] ?? 0;
                     </div>
                     <div class="score-label">Overall Wellness</div>
                 </div>
+                <?php if (!empty($score_details) && !isset($score_details['status'])): ?>
+                <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #e9ecef;">
+                    <p style="font-size: 0.85rem; color: #6c757d; margin-bottom: 8px; font-weight: 600;">Score Breakdown:</p>
+                    <?php if (isset($score_details['bp_status'])): ?>
+                    <div style="font-size: 0.8rem; color: #495057; margin-bottom: 5px;">
+                        <i class="fas fa-heartbeat" style="width: 16px; color: #667eea;"></i> BP: <?php echo $score_details['bp_status']; ?>
+                    </div>
+                    <?php endif; ?>
+                    <?php if (isset($score_details['hr_status'])): ?>
+                    <div style="font-size: 0.8rem; color: #495057; margin-bottom: 5px;">
+                        <i class="fas fa-heart" style="width: 16px; color: #667eea;"></i> Heart: <?php echo $score_details['hr_status']; ?>
+                    </div>
+                    <?php endif; ?>
+                    <?php if (isset($score_details['temp_status'])): ?>
+                    <div style="font-size: 0.8rem; color: #495057; margin-bottom: 5px;">
+                        <i class="fas fa-thermometer-half" style="width: 16px; color: #667eea;"></i> Temp: <?php echo $score_details['temp_status']; ?>
+                    </div>
+                    <?php endif; ?>
+                    <?php if (isset($score_details['bmi_status'])): ?>
+                    <div style="font-size: 0.8rem; color: #495057; margin-bottom: 5px;">
+                        <i class="fas fa-weight" style="width: 16px; color: #667eea;"></i> BMI: <?php echo $score_details['bmi_status']; ?>
+                    </div>
+                    <?php endif; ?>
+                </div>
+                <?php elseif (isset($score_details['status'])): ?>
+                <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 6px; font-size: 0.85rem; color: #856404;">
+                    <i class="fas fa-info-circle"></i> <?php echo $score_details['status']; ?>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
 

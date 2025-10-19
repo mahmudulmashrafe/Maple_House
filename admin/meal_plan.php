@@ -57,6 +57,7 @@ foreach ($all_meal_items as $item) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Debug: Log all POST data
+    error_log("=== MEAL PLAN POST DATA ===");
     error_log("POST Data: " . print_r($_POST, true));
     
     try {
@@ -64,9 +65,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $meal_date = $_POST['meal_date'];
             $meal_type = $_POST['meal_type'];
             
+            error_log("Processing meal: Date={$meal_date}, Type={$meal_type}");
+            
             // Get the chef ID for the specific meal type
             $chef_field = strtolower($meal_type) . '_chef';
             $chef_id = !empty($_POST[$chef_field]) ? $_POST[$chef_field] : null;
+            
+            error_log("Chef field: {$chef_field}, Chef ID: {$chef_id}");
             
             // Prepare item data for the actual database structure
             $item_fields = [];
@@ -77,6 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $sections = ['veg', 'nonveg', 'drinks'];
             $section_slots = ['veg' => 3, 'nonveg' => 3, 'drinks' => 2];
             
+            error_log("Collecting items for sections:");
             foreach ($sections as $section) {
                 for ($i = 1; $i <= $section_slots[$section]; $i++) {
                     $field_name = "{$meal_prefix}_{$section}_item_{$i}";
@@ -84,14 +90,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $item_fields[] = $field_name;
                     $item_values[] = $item_id;
                     
+                    error_log("  {$field_name} = " . ($item_id ? $item_id : 'NULL'));
+                    
                     if ($item_id) {
                         $has_items = true;
                     }
                 }
             }
             
+            error_log("Has items: " . ($has_items ? 'YES' : 'NO'));
+            
             // Validate that at least one item is selected
             if (!$has_items) {
+                error_log("ERROR: No items selected!");
                 throw new Exception("Please select at least one meal item.");
             }
             
@@ -106,9 +117,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $update_fields = implode(' = ?, ', $item_fields) . ' = ?';
                 $sql = "UPDATE daily_meals SET {$chef_column} = ?, {$update_fields} WHERE meal_date = ? AND meal_type = ?";
                 $params = array_merge([$chef_id], $item_values, [$meal_date, $meal_type]);
+                
+                error_log("UPDATE SQL: {$sql}");
+                error_log("UPDATE PARAMS: " . print_r($params, true));
+                
                 $stmt = $db->prepare($sql);
-                $stmt->execute($params);
-                $success_message = "Meal updated successfully!";
+                $result = $stmt->execute($params);
+                
+                if ($result) {
+                    error_log("UPDATE SUCCESS - Rows affected: " . $stmt->rowCount());
+                    $success_message = "Meal updated successfully!";
+                } else {
+                    error_log("UPDATE FAILED - Error: " . print_r($stmt->errorInfo(), true));
+                    throw new Exception("Failed to update meal in database.");
+                }
             } else {
                 // Insert new meal with the actual database structure
                 $chef_column = strtolower($meal_type) . '_chef_id';
@@ -116,9 +138,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $placeholders = str_repeat('?, ', count($item_fields) - 1) . '?';
                 $sql = "INSERT INTO daily_meals (meal_date, meal_type, {$chef_column}, {$fields_str}) VALUES (?, ?, ?, {$placeholders})";
                 $params = array_merge([$meal_date, $meal_type, $chef_id], $item_values);
+                
+                error_log("INSERT SQL: {$sql}");
+                error_log("INSERT PARAMS: " . print_r($params, true));
+                
                 $stmt = $db->prepare($sql);
-                $stmt->execute($params);
-                $success_message = "Meal saved successfully!";
+                $result = $stmt->execute($params);
+                
+                if ($result) {
+                    $new_id = $db->lastInsertId();
+                    error_log("INSERT SUCCESS - New ID: {$new_id}");
+                    $success_message = "Meal saved successfully!";
+                    
+                    // Verify the insert by reading back
+                    $verify_stmt = $db->prepare("SELECT * FROM daily_meals WHERE id = ?");
+                    $verify_stmt->execute([$new_id]);
+                    $verify_data = $verify_stmt->fetch(PDO::FETCH_ASSOC);
+                    error_log("VERIFIED INSERT DATA: " . print_r($verify_data, true));
+                } else {
+                    error_log("INSERT FAILED - Error: " . print_r($stmt->errorInfo(), true));
+                    throw new Exception("Failed to insert meal into database.");
+                }
             }
         } elseif ($_POST['action'] === 'delete_meal') {
             // Get meal type before deleting for success message
@@ -1041,6 +1081,45 @@ foreach ($meals as $meal) {
             </div>
         </div>
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 style="color: #e74c3c;">
+                    <i class="fas fa-exclamation-triangle"></i> Confirm Delete
+                </h3>
+                <span class="close" onclick="closeDeleteModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 1.1rem; color: #2c3e50; margin-bottom: 20px;">
+                    Are you sure you want to delete this <strong id="deleteMealType"></strong> meal?
+                </p>
+                <p style="color: #666; font-size: 0.95rem; margin-bottom: 10px;">
+                    <strong>Date:</strong> <span id="deleteMealDate"></span>
+                </p>
+                <p style="color: #666; font-size: 0.95rem; margin-bottom: 20px;">
+                    <strong>Items:</strong> <span id="deleteMealItems"></span>
+                </p>
+                <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                    <i class="fas fa-info-circle" style="color: #ffc107;"></i>
+                    <span style="color: #856404; font-size: 0.9rem;">This action cannot be undone.</span>
+                </div>
+                <form id="deleteForm" method="POST">
+                    <input type="hidden" name="action" value="delete_meal">
+                    <input type="hidden" name="meal_id" id="deleteMealId">
+                    <div class="form-actions" style="margin-top: 0;">
+                        <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary" style="background: #e74c3c;">
+                            <i class="fas fa-trash"></i> Yes, Delete
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
     <style>
         .meal-items-grid {
             display: flex;
@@ -1718,38 +1797,89 @@ foreach ($meals as $meal) {
         }
 
         function deleteMeal(mealId) {
-            if (confirm('Are you sure you want to delete this meal?')) {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.style.display = 'none';
-                
-                const actionInput = document.createElement('input');
-                actionInput.type = 'hidden';
-                actionInput.name = 'action';
-                actionInput.value = 'delete_meal';
-                form.appendChild(actionInput);
-                
-                const idInput = document.createElement('input');
-                idInput.type = 'hidden';
-                idInput.name = 'meal_id';
-                idInput.value = mealId;
-                form.appendChild(idInput);
-                
-                document.body.appendChild(form);
-                form.submit();
+            // Find the meal data from weeklyMeals
+            let mealToDelete = null;
+            let mealDate = null;
+            
+            for (const [date, meals] of Object.entries(weeklyMeals)) {
+                for (const [type, meal] of Object.entries(meals)) {
+                    if (meal && meal.id == mealId) {
+                        mealToDelete = meal;
+                        mealDate = date;
+                        break;
+                    }
+                }
+                if (mealToDelete) break;
             }
+            
+            if (mealToDelete) {
+                // Populate modal with meal details
+                document.getElementById('deleteMealId').value = mealId;
+                document.getElementById('deleteMealType').textContent = mealToDelete.meal_type;
+                
+                // Format date nicely
+                const dateObj = new Date(mealDate);
+                const formattedDate = dateObj.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+                document.getElementById('deleteMealDate').textContent = formattedDate;
+                
+                // Show meal items
+                const items = mealToDelete.menu_items || 'No items listed';
+                document.getElementById('deleteMealItems').textContent = items;
+                
+                // Show modal
+                document.getElementById('deleteModal').style.display = 'block';
+            } else {
+                // Fallback to simple confirm if meal not found
+                if (confirm('Are you sure you want to delete this meal?')) {
+                    submitDeleteForm(mealId);
+                }
+            }
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+        }
+
+        function submitDeleteForm(mealId) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.style.display = 'none';
+            
+            const actionInput = document.createElement('input');
+            actionInput.type = 'hidden';
+            actionInput.name = 'action';
+            actionInput.value = 'delete_meal';
+            form.appendChild(actionInput);
+            
+            const idInput = document.createElement('input');
+            idInput.type = 'hidden';
+            idInput.name = 'meal_id';
+            idInput.value = mealId;
+            form.appendChild(idInput);
+            
+            document.body.appendChild(form);
+            form.submit();
         }
 
         // Close modals when clicking outside
         window.onclick = function(event) {
             const mealModal = document.getElementById('mealModal');
             const itemModal = document.getElementById('itemModal');
+            const deleteModal = document.getElementById('deleteModal');
             
             if (event.target === mealModal) {
                 closeModal();
             }
             if (event.target === itemModal) {
                 closeItemModal();
+            }
+            if (event.target === deleteModal) {
+                closeDeleteModal();
             }
         }
     </script>
