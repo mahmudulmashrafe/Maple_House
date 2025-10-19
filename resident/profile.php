@@ -92,22 +92,141 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['renew_subscription'])
             $update_plan_stmt->bindParam(':user_id', $_SESSION['user_id']);
             
             if ($update_plan_stmt->execute()) {
+                // Reset service counts for current month if plan changed
+                if ($new_plan_id != $current_plan_id) {
+                    $current_month = date('Y-m');
+                    
+                    // Get current plan quotas for calculation
+                    $old_plan_quotas = [
+                        'Basic Plan' => ['Laundry' => 10, 'Room Cleaning' => 10, 'Grocery Shopping' => 5, 'Emergency Care' => 2, 'Doctor Appointment' => 5, 'Transportation' => 5],
+                        'Plan 1' => ['Laundry' => 15, 'Room Cleaning' => 15, 'Grocery Shopping' => 10, 'Emergency Care' => 5, 'Doctor Appointment' => 10, 'Transportation' => 8],
+                        'Plan 2' => ['Laundry' => 20, 'Room Cleaning' => 20, 'Grocery Shopping' => 15, 'Emergency Care' => 8, 'Doctor Appointment' => 12, 'Transportation' => 10],
+                        'Plan 3' => ['Laundry' => 25, 'Room Cleaning' => 25, 'Grocery Shopping' => 20, 'Emergency Care' => 10, 'Doctor Appointment' => 15, 'Transportation' => 15],
+                        'Plan 4' => ['Laundry' => 999, 'Room Cleaning' => 999, 'Grocery Shopping' => 999, 'Emergency Care' => 999, 'Doctor Appointment' => 999, 'Transportation' => 999]
+                    ];
+                    
+                    $old_plan_name = $resident['plan_name'];
+                    $old_base_quotas = $old_plan_quotas[$old_plan_name] ?? $old_plan_quotas['Basic Plan'];
+                    
+                    // Get current usage and additional quotas
+                    $usage_query = "SELECT s.service_name, COUNT(*) as used_count
+                                   FROM service_requests sr
+                                   JOIN services s ON sr.service_id = s.id
+                                   WHERE sr.resident_id = :resident_id 
+                                   AND DATE_FORMAT(sr.request_date, '%Y-%m') = :current_month
+                                   GROUP BY s.service_name";
+                    $usage_stmt = $db->prepare($usage_query);
+                    $usage_stmt->bindParam(':resident_id', $resident['id']);
+                    $usage_stmt->bindParam(':current_month', $current_month);
+                    $usage_stmt->execute();
+                    $current_usage = $usage_stmt->fetchAll(PDO::FETCH_ASSOC);
+                    
+                    // Get additional quotas
+                    $additional_quota_query = "SELECT service_name, additional_quota 
+                                              FROM resident_service_quotas 
+                                              WHERE resident_id = :resident_id 
+                                              AND month = :current_month";
+                    $additional_quota_stmt = $db->prepare($additional_quota_query);
+                    $additional_quota_stmt->bindParam(':resident_id', $resident['id']);
+                    $additional_quota_stmt->bindParam(':current_month', $current_month);
+                    $additional_quota_stmt->execute();
+                    $additional_quotas = $additional_quota_stmt->fetchAll(PDO::FETCH_ASSOC);
+                    
+                    // Calculate remaining purchased quotas for each service
+                    $usage_map = [];
+                    foreach ($current_usage as $usage) {
+                        $usage_map[$usage['service_name']] = $usage['used_count'];
+                    }
+                    
+                    $additional_map = [];
+                    foreach ($additional_quotas as $quota) {
+                        $additional_map[$quota['service_name']] = $quota['additional_quota'];
+                    }
+                    
+                    // Update additional quotas based on usage
+                    foreach ($additional_map as $service_name => $purchased_quota) {
+                        $base_quota = $old_base_quotas[$service_name] ?? 0;
+                        $used = $usage_map[$service_name] ?? 0;
+                        
+                        if ($used > $base_quota) {
+                            // User used some purchased quota
+                            $used_from_purchased = $used - $base_quota;
+                            $remaining_purchased = max(0, $purchased_quota - $used_from_purchased);
+                            
+                            // Update the additional quota to remaining amount
+                            if ($remaining_purchased > 0) {
+                                $update_quota_query = "UPDATE resident_service_quotas 
+                                                      SET additional_quota = :remaining_quota 
+                                                      WHERE resident_id = :resident_id 
+                                                      AND service_name = :service_name 
+                                                      AND month = :current_month";
+                                $update_quota_stmt = $db->prepare($update_quota_query);
+                                $update_quota_stmt->bindParam(':remaining_quota', $remaining_purchased);
+                                $update_quota_stmt->bindParam(':resident_id', $resident['id']);
+                                $update_quota_stmt->bindParam(':service_name', $service_name);
+                                $update_quota_stmt->bindParam(':current_month', $current_month);
+                                $update_quota_stmt->execute();
+                            } else {
+                                // All purchased quota used, remove the record
+                                $delete_quota_query = "DELETE FROM resident_service_quotas 
+                                                      WHERE resident_id = :resident_id 
+                                                      AND service_name = :service_name 
+                                                      AND month = :current_month";
+                                $delete_quota_stmt = $db->prepare($delete_quota_query);
+                                $delete_quota_stmt->bindParam(':resident_id', $resident['id']);
+                                $delete_quota_stmt->bindParam(':service_name', $service_name);
+                                $delete_quota_stmt->bindParam(':current_month', $current_month);
+                                $delete_quota_stmt->execute();
+                            }
+                        }
+                        // If used <= base_quota, keep all purchased quota as is
+                    }
+                    
+                    // Delete service requests for current month (reset usage to 0)
+                    $delete_requests_query = "DELETE FROM service_requests 
+                                             WHERE resident_id = :resident_id 
+                                             AND DATE_FORMAT(request_date, '%Y-%m') = :current_month";
+                    $delete_requests_stmt = $db->prepare($delete_requests_query);
+                    $delete_requests_stmt->bindParam(':resident_id', $resident['id']);
+                    $delete_requests_stmt->bindParam(':current_month', $current_month);
+                    $delete_requests_stmt->execute();
+                }
+                
                 // Record in revenue history
-                $payment_type = ($new_plan_id == $current_plan_id) ? 'renewal' : 'upgrade';
+                $payment_type = ($new_plan_id == $current_plan_id) ? 'renewal' : (($new_plan['monthly_fee'] > $resident['monthly_fee']) ? 'upgrade' : 'downgrade');
+                
+                // Generate unique transaction ID
+                $transaction_id = 'TXN_' . date('Y') . '_' . rand(10000, 99999);
+                
+                // Calculate subscription dates
+                $start_date = date('Y-m-d');
+                $end_date = date('Y-m-d', strtotime('+1 month'));
+                $renewal_due = date('Y-m-d', strtotime('+1 month'));
+                $grace_end = date('Y-m-d', strtotime('+1 month +2 days'));
+                
                 $revenue_query = "INSERT INTO resident_revenue_history 
-                                 (user_id, resident_id, plan_id, amount, payment_date, payment_type, payment_status) 
+                                 (user_id, resident_id, plan_id, transaction_id, amount, payment_date, payment_type, payment_status, 
+                                  subscription_start_date, subscription_end_date, renewal_due_date, grace_period_end, 
+                                  payment_method, is_active) 
                                  VALUES 
-                                 (:user_id, :resident_id, :plan_id, :amount, NOW(), :payment_type, 'paid')";
+                                 (:user_id, :resident_id, :plan_id, :transaction_id, :amount, NOW(), :payment_type, 'paid',
+                                  :start_date, :end_date, :renewal_due, :grace_end, 'online', 1)";
                 $revenue_stmt = $db->prepare($revenue_query);
                 $revenue_stmt->bindParam(':user_id', $_SESSION['user_id']);
                 $revenue_stmt->bindParam(':resident_id', $resident['id']);
                 $revenue_stmt->bindParam(':plan_id', $new_plan_id);
+                $revenue_stmt->bindParam(':transaction_id', $transaction_id);
                 $revenue_stmt->bindParam(':amount', $new_plan['monthly_fee']);
                 $revenue_stmt->bindParam(':payment_type', $payment_type);
+                $revenue_stmt->bindParam(':start_date', $start_date);
+                $revenue_stmt->bindParam(':end_date', $end_date);
+                $revenue_stmt->bindParam(':renewal_due', $renewal_due);
+                $revenue_stmt->bindParam(':grace_end', $grace_end);
                 $revenue_stmt->execute();
                 
                 $action = ($new_plan_id == $current_plan_id) ? 'renewed' : 'changed';
-                $message = "Subscription {$action} successfully to {$new_plan['plan_name']}!";
+                $reset_msg = ($new_plan_id != $current_plan_id) ? ' Service counts have been reset for this month.' : '';
+                $message = "Subscription {$action} successfully to {$new_plan['plan_name']}!{$reset_msg}";
                 $message_type = "success";
                 
                 // Refresh resident data
@@ -198,7 +317,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_password'])) {
 
         .info-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
             margin-bottom: 20px;
         }
@@ -511,14 +630,70 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_password'])) {
                     <div class="info-label">Monthly Fee</div>
                     <div class="info-value">৳<?php echo number_format($resident['monthly_fee']); ?></div>
                 </div>
-                <div class="info-card">
-                    <div class="info-label">Laundry Limit</div>
-                    <div class="info-value"><?php echo $resident['laundry_limit']; ?> times/month</div>
-                </div>
-                <div class="info-card">
-                    <div class="info-label">Cleaning Limit</div>
-                    <div class="info-value"><?php echo $resident['cleaning_limit']; ?> times/month</div>
-                </div>
+            </div>
+            
+            <h3 style="margin-top: 30px; margin-bottom: 15px; color: #2c3e50;"><i class="fas fa-list"></i> Service Quotas (Per Month)</h3>
+            
+            <div class="info-grid">
+                <?php
+                // Define service quotas based on actual database plan names
+                $service_quotas = [
+                    'Basic Plan' => [
+                        'Laundry' => 10,
+                        'Room Cleaning' => 10,
+                        'Grocery Shopping' => 5,
+                        'Emergency Care' => 2,
+                        'Doctor Appointment' => 5,
+                        'Transportation' => 5
+                    ],
+                    'Plan 1' => [
+                        'Laundry' => 15,
+                        'Room Cleaning' => 15,
+                        'Grocery Shopping' => 10,
+                        'Emergency Care' => 5,
+                        'Doctor Appointment' => 10,
+                        'Transportation' => 8
+                    ],
+                    'Plan 2' => [
+                        'Laundry' => 20,
+                        'Room Cleaning' => 20,
+                        'Grocery Shopping' => 15,
+                        'Emergency Care' => 8,
+                        'Doctor Appointment' => 12,
+                        'Transportation' => 10
+                    ],
+                    'Plan 3' => [
+                        'Laundry' => 25,
+                        'Room Cleaning' => 25,
+                        'Grocery Shopping' => 20,
+                        'Emergency Care' => 10,
+                        'Doctor Appointment' => 15,
+                        'Transportation' => 15
+                    ],
+                    'Plan 4' => [
+                        'Laundry' => 'Unlimited',
+                        'Room Cleaning' => 'Unlimited',
+                        'Grocery Shopping' => 'Unlimited',
+                        'Emergency Care' => 'Unlimited',
+                        'Doctor Appointment' => 'Unlimited',
+                        'Transportation' => 'Unlimited'
+                    ]
+                ];
+                
+                // Get plan name from database
+                $plan_name = trim($resident['plan_name']);
+                
+                // Get quotas for current plan, default to Basic Plan
+                $quotas = $service_quotas[$plan_name] ?? $service_quotas['Basic Plan'];
+                
+                // Display all service quotas
+                foreach ($quotas as $service => $quota):
+                ?>
+                    <div class="info-card">
+                        <div class="info-label"><?php echo htmlspecialchars($service); ?></div>
+                        <div class="info-value"><?php echo htmlspecialchars($quota); ?><?php echo is_numeric($quota) ? '/month' : ''; ?></div>
+                    </div>
+                <?php endforeach; ?>
             </div>
         </div>
 
@@ -553,9 +728,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_password'])) {
                                 </div>
                                 <div class="plan-price">৳<?php echo number_format($plan['monthly_fee']); ?><span>/month</span></div>
                                 <div class="plan-features">
-                                    <div class="feature"><i class="fas fa-tshirt"></i> <?php echo $plan['laundry_limit']; ?> Laundry/month</div>
-                                    <div class="feature"><i class="fas fa-broom"></i> <?php echo $plan['cleaning_limit']; ?> Cleaning/month</div>
-                                    <div class="feature"><i class="fas fa-check-circle"></i> Full Access to Services</div>
+                                    <?php
+                                    // Define service quotas for display
+                                    $display_quotas = [
+                                        'Basic Plan' => ['Laundry' => 10, 'Room Cleaning' => 10, 'Grocery' => 5, 'Emergency' => 2, 'Doctor' => 5, 'Transport' => 5],
+                                        'Plan 1' => ['Laundry' => 15, 'Room Cleaning' => 15, 'Grocery' => 10, 'Emergency' => 5, 'Doctor' => 10, 'Transport' => 8],
+                                        'Plan 2' => ['Laundry' => 20, 'Room Cleaning' => 20, 'Grocery' => 15, 'Emergency' => 8, 'Doctor' => 12, 'Transport' => 10],
+                                        'Plan 3' => ['Laundry' => 25, 'Room Cleaning' => 25, 'Grocery' => 20, 'Emergency' => 10, 'Doctor' => 15, 'Transport' => 15],
+                                        'Plan 4' => ['All Services' => 'Unlimited']
+                                    ];
+                                    $plan_display = $display_quotas[$plan['plan_name']] ?? $display_quotas['Basic Plan'];
+                                    foreach ($plan_display as $service => $quota):
+                                    ?>
+                                        <div class="feature"><i class="fas fa-check-circle"></i> <?php echo $service; ?>: <?php echo $quota; ?></div>
+                                    <?php endforeach; ?>
                                 </div>
                             </div>
                         </label>
