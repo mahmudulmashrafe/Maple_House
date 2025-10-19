@@ -140,7 +140,7 @@ if ($_POST && isset($_POST['register'])) {
         <div class="auth-card" style="background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 20px; padding: 40px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);">
             <div class="auth-header">
                 <h2><i class="fas fa-home"></i> Maple House</h2>
-                <p>Register as a new resident</p>
+                <p style="color: white;">Register as a new resident</p>
             </div>
             
             <?php if ($error_message): ?>
@@ -157,93 +157,93 @@ if ($_POST && isset($_POST['register'])) {
                 </div>
             <?php endif; ?>
             
-            <form class="auth-form register-form" method="POST" action="">
+            <form class="auth-form register-form" method="POST" action="" style="color: white;">
                 <h3 style="color: white; margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">Personal Information</h3>
                 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="first_name">
+                        <label for="first_name" style="color: white;">
                             <i class="fas fa-user"></i>
                             First Name *
                         </label>
-                        <input type="text" id="first_name" name="first_name" required 
+                        <input type="text" id="first_name" name="first_name" required style="color: black;"
                                value="<?php echo isset($_POST['first_name']) ? htmlspecialchars($_POST['first_name']) : ''; ?>">
                     </div>
                     
                     <div class="form-group">
-                        <label for="last_name">
+                        <label for="last_name" style="color: white;">
                             <i class="fas fa-user"></i>
                             Last Name *
                         </label>
-                        <input type="text" id="last_name" name="last_name" required 
+                        <input type="text" id="last_name" name="last_name" required style="color: black;"
                                value="<?php echo isset($_POST['last_name']) ? htmlspecialchars($_POST['last_name']) : ''; ?>">
                     </div>
                 </div>
                 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="username">
+                        <label for="username" style="color: white;">
                             <i class="fas fa-at"></i>
                             Username *
                         </label>
-                        <input type="text" id="username" name="username" required 
+                        <input type="text" id="username" name="username" required style="color: black;"
                                value="<?php echo isset($_POST['username']) ? htmlspecialchars($_POST['username']) : ''; ?>">
                     </div>
                     
                     <div class="form-group">
-                        <label for="email">
+                        <label for="email" style="color: white;">
                             <i class="fas fa-envelope"></i>
                             Email *
                         </label>
-                        <input type="email" id="email" name="email" required 
+                        <input type="email" id="email" name="email" required style="color: black;"
                                value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>">
                     </div>
                 </div>
                 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="password">
+                        <label for="password" style="color: white;">
                             <i class="fas fa-lock"></i>
                             Password *
                         </label>
-                        <input type="password" id="password" name="password" required>
+                        <input type="password" id="password" name="password" required style="color: black;">
                     </div>
                     
                     <div class="form-group">
-                        <label for="confirm_password">
+                        <label for="confirm_password" style="color: white;">
                             <i class="fas fa-lock"></i>
                             Confirm Password *
                         </label>
-                        <input type="password" id="confirm_password" name="confirm_password" required>
+                        <input type="password" id="confirm_password" name="confirm_password" required style="color: black;">
                     </div>
                 </div>
                 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="phone">
+                        <label for="phone" style="color: white;">
                             <i class="fas fa-phone"></i>
                             Phone Number
                         </label>
-                        <input type="tel" id="phone" name="phone" 
+                        <input type="tel" id="phone" name="phone" style="color: black;"
                                value="<?php echo isset($_POST['phone']) ? htmlspecialchars($_POST['phone']) : ''; ?>">
                     </div>
                     
                     <div class="form-group">
-                        <label for="date_of_birth">
+                        <label for="date_of_birth" style="color: white;">
                             <i class="fas fa-calendar"></i>
                             Date of Birth
                         </label>
-                        <input type="date" id="date_of_birth" name="date_of_birth" 
+                        <input type="date" id="date_of_birth" name="date_of_birth" style="color: black;"
                                value="<?php echo isset($_POST['date_of_birth']) ? $_POST['date_of_birth'] : ''; ?>">
                     </div>
                 </div>
                 
                 <div class="form-group">
-                    <label for="gender">
+                    <label for="gender" style="color: white;">
                         <i class="fas fa-venus-mars"></i>
                         Gender
                     </label>
-                    <select id="gender" name="gender">
+                    <select id="gender" name="gender" style="color: black;">
                         <option value="Male" <?php echo (isset($_POST['gender']) && $_POST['gender'] == 'Male') ? 'selected' : ''; ?>>Male</option>
                         <option value="Female" <?php echo (isset($_POST['gender']) && $_POST['gender'] == 'Female') ? 'selected' : ''; ?>>Female</option>
                         <option value="Other" <?php echo (isset($_POST['gender']) && $_POST['gender'] == 'Other') ? 'selected' : ''; ?>>Other</option>
@@ -251,31 +251,31 @@ if ($_POST && isset($_POST['register'])) {
                 </div>
                 
                 <div class="form-group">
-                    <label for="address">
+                    <label for="address" style="color: white;">
                         <i class="fas fa-map-marker-alt"></i>
                         Address
                     </label>
-                    <textarea id="address" name="address" rows="3"><?php echo isset($_POST['address']) ? htmlspecialchars($_POST['address']) : ''; ?></textarea>
+                    <textarea id="address" name="address" rows="3" style="color: black;"><?php echo isset($_POST['address']) ? htmlspecialchars($_POST['address']) : ''; ?></textarea>
                 </div>
                 
                 <h3 style="color: white; margin: 30px 0 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">Emergency Contact</h3>
                 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="emergency_contact_name">
+                        <label for="emergency_contact_name" style="color: white;">
                             <i class="fas fa-user-friends"></i>
                             Emergency Contact Name
                         </label>
-                        <input type="text" id="emergency_contact_name" name="emergency_contact_name" 
+                        <input type="text" id="emergency_contact_name" name="emergency_contact_name" style="color: black;"
                                value="<?php echo isset($_POST['emergency_contact_name']) ? htmlspecialchars($_POST['emergency_contact_name']) : ''; ?>">
                     </div>
                     
                     <div class="form-group">
-                        <label for="emergency_contact_phone">
+                        <label for="emergency_contact_phone" style="color: white;">
                             <i class="fas fa-phone-alt"></i>
                             Emergency Contact Phone
                         </label>
-                        <input type="tel" id="emergency_contact_phone" name="emergency_contact_phone" 
+                        <input type="tel" id="emergency_contact_phone" name="emergency_contact_phone" style="color: black;"
                                value="<?php echo isset($_POST['emergency_contact_phone']) ? htmlspecialchars($_POST['emergency_contact_phone']) : ''; ?>">
                     </div>
                 </div>
@@ -289,7 +289,11 @@ if ($_POST && isset($_POST['register'])) {
                                    <?php echo (isset($_POST['plan_id']) && $_POST['plan_id'] == $plan['id']) ? 'checked' : ''; ?>>
                             <h4><?php echo htmlspecialchars($plan['plan_name']); ?></h4>
                             <div class="price">
-                                <?php echo $plan['monthly_fee'] > 0 ? '৳' . number_format($plan['monthly_fee']) . '/month' : 'Free'; ?>
+                                <?php if ($plan['monthly_fee'] > 0): ?>
+                                    ৳<?php echo number_format($plan['monthly_fee']); ?><span style="font-size: 0.7em;">/month</span>
+                                <?php else: ?>
+                                    Free
+                                <?php endif; ?>
                             </div>
                             <div class="features">
                                 <?php if ($plan['laundry_limit'] == -1): ?>
@@ -315,29 +319,29 @@ if ($_POST && isset($_POST['register'])) {
                 <h3 style="color: white; margin: 30px 0 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">Medical Information</h3>
                 
                 <div class="form-group">
-                    <label for="medical_conditions">
+                    <label for="medical_conditions" style="color: white;">
                         <i class="fas fa-notes-medical"></i>
                         Medical Conditions
                     </label>
-                    <textarea id="medical_conditions" name="medical_conditions" rows="3" 
+                    <textarea id="medical_conditions" name="medical_conditions" rows="3" style="color: black;"
                               placeholder="List any existing medical conditions"><?php echo isset($_POST['medical_conditions']) ? htmlspecialchars($_POST['medical_conditions']) : ''; ?></textarea>
                 </div>
                 
                 <div class="form-group">
-                    <label for="allergies">
+                    <label for="allergies" style="color: white;">
                         <i class="fas fa-exclamation-triangle"></i>
                         Allergies
                     </label>
-                    <textarea id="allergies" name="allergies" rows="2" 
+                    <textarea id="allergies" name="allergies" rows="2" style="color: black;"
                               placeholder="List any allergies"><?php echo isset($_POST['allergies']) ? htmlspecialchars($_POST['allergies']) : ''; ?></textarea>
                 </div>
                 
                 <div class="form-group">
-                    <label for="family_contact_info">
+                    <label for="family_contact_info" style="color: white;">
                         <i class="fas fa-users"></i>
                         Family Contact Information
                     </label>
-                    <textarea id="family_contact_info" name="family_contact_info" rows="3" 
+                    <textarea id="family_contact_info" name="family_contact_info" rows="3" style="color: black;"
                               placeholder="Family members contact details"><?php echo isset($_POST['family_contact_info']) ? htmlspecialchars($_POST['family_contact_info']) : ''; ?></textarea>
                 </div>
                 
@@ -348,8 +352,8 @@ if ($_POST && isset($_POST['register'])) {
             </form>
             
             <div class="auth-links">
-                <p>Already have an account? <a href="login.php">Login here</a></p>
-                <p><a href="index.php">← Back to Home</a></p>
+                <p style="color: white;">Already have an account? <a href="login.php">Login here</a></p>
+                <p style="color: white;"><a href="index.php">← Back to Home</a></p>
             </div>
         </div>
     </div>

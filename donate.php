@@ -77,6 +77,35 @@ if ($_POST && isset($_POST['donate'])) {
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/auth.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .donation-form-section {
+            position: relative;
+            overflow: hidden;
+        }
+        .donation-bg-1, .donation-bg-2, .donation-bg-3 {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            filter: blur(3px);
+            z-index: 0;
+        }
+        .donation-bg-1 {
+            background-image: url('images/bg-1.jpg');
+            opacity: 1;
+        }
+        .donation-bg-2 {
+            background-image: url('images/bg-2.jpg');
+            opacity: 0;
+        }
+        .donation-bg-3 {
+            background-image: url('images/bg-3.jpg');
+            opacity: 0;
+        }
+    </style>
 </head>
 <body>
     <!-- Navigation -->
@@ -96,23 +125,30 @@ if ($_POST && isset($_POST['donate'])) {
         </div>
     </nav>
 
-    <!-- Donation Hero -->
-    <section class="donation-hero" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 120px 0 80px; text-align: center;">
-        <div class="container">
-            <h1 style="font-size: 3rem; margin-bottom: 20px;">Make a Difference</h1>
-            <p style="font-size: 1.2rem; max-width: 600px; margin: 0 auto;">Your generous donation helps us provide better care, facilities, and services to our elderly residents. Every contribution makes a meaningful impact.</p>
+    <!-- Donation Hero and Form Section with Background -->
+    <section class="donation-form-section">
+        <!-- Background Images -->
+        <div class="donation-bg-1"></div>
+        <div class="donation-bg-2"></div>
+        <div class="donation-bg-3"></div>
+        
+        <!-- Donation Hero -->
+        <div class="donation-hero" style="color: white; padding: 120px 0 40px; text-align: center; position: relative; z-index: 10;">
+            <div class="container">
+                <h1 style="font-size: 3rem; margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">Make a Difference</h1>
+                <p style="font-size: 1.2rem; max-width: 600px; margin: 0 auto; text-shadow: 1px 1px 3px rgba(0,0,0,0.5);">Your generous donation helps us provide better care, facilities, and services to our elderly residents. Every contribution makes a meaningful impact.</p>
+            </div>
         </div>
-    </section>
 
-    <!-- Donation Form -->
-    <section style="padding: 60px 0; background: #f8f9fa;">
-        <div class="container">
-            <div style="max-width: 800px; margin: 0 auto;">
-                <div class="auth-card" style="padding: 40px;">
-                    <div class="auth-header">
-                        <h2><i class="fas fa-heart"></i> Make a Donation</h2>
-                        <p>Help us continue providing excellent care for our residents</p>
-                    </div>
+        <!-- Donation Form -->
+        <div style="padding: 40px 0 60px; position: relative; z-index: 10;">
+            <div class="container">
+                <div style="max-width: 800px; margin: 0 auto;">
+                    <div class="auth-card" style="background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 20px; padding: 40px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);">
+                        <div class="auth-header">
+                            <h2 style="color: white;"><i class="fas fa-heart"></i> Make a Donation</h2>
+                            <p style="color: white;">Help us continue providing excellent care for our residents</p>
+                        </div>
                     
                     <?php if ($error_message): ?>
                         <div class="alert alert-error">
@@ -127,139 +163,140 @@ if ($_POST && isset($_POST['donate'])) {
                             <?php echo $success_message; ?>
                         </div>
                     <?php endif; ?>
-                    
-                    <form class="auth-form" method="POST" action="">
-                        <!-- Donation Amount -->
-                        <div class="form-group">
-                            <label><i class="fas fa-dollar-sign"></i> Donation Amount</label>
-                            <div class="amount-options" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px;">
-                                <div class="amount-option" onclick="selectAmount(1000)">
-                                    <input type="radio" name="amount" value="1000" id="amount_1000">
-                                    <label for="amount_1000">৳1,000</label>
-                                </div>
-                                <div class="amount-option" onclick="selectAmount(2500)">
-                                    <input type="radio" name="amount" value="2500" id="amount_2500">
-                                    <label for="amount_2500">৳2,500</label>
-                                </div>
-                                <div class="amount-option" onclick="selectAmount(5000)">
-                                    <input type="radio" name="amount" value="5000" id="amount_5000">
-                                    <label for="amount_5000">৳5,000</label>
-                                </div>
-                                <div class="amount-option" onclick="selectAmount(10000)">
-                                    <input type="radio" name="amount" value="10000" id="amount_10000">
-                                    <label for="amount_10000">৳10,000</label>
-                                </div>
-                                <div class="amount-option" onclick="selectAmount(25000)">
-                                    <input type="radio" name="amount" value="25000" id="amount_25000">
-                                    <label for="amount_25000">৳25,000</label>
-                                </div>
-                                <div class="amount-option" onclick="selectCustom()">
-                                    <input type="radio" name="amount" value="custom" id="amount_custom">
-                                    <label for="amount_custom">Custom</label>
-                                </div>
-                            </div>
-                            <input type="number" name="custom_amount" id="custom_amount" placeholder="Enter custom amount" 
-                                   style="display: none; margin-top: 10px;" min="100" step="50">
-                        </div>
                         
-                        <!-- Purpose -->
-                        <div class="form-group">
-                            <label for="purpose">
-                                <i class="fas fa-bullseye"></i>
-                                Donation Purpose
-                            </label>
-                            <select id="purpose" name="purpose" required>
-                                <option value="General Support">General Support</option>
-                                <option value="Medical Equipment">Medical Equipment</option>
-                                <option value="Food & Nutrition">Food & Nutrition</option>
-                                <option value="Recreation & Activities">Recreation & Activities</option>
-                                <option value="Infrastructure Development">Infrastructure Development</option>
-                                <option value="Emergency Fund">Emergency Fund</option>
-                                <option value="Staff Training">Staff Training</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Payment Method -->
-                        <div class="form-group">
-                            <label for="payment_method">
-                                <i class="fas fa-credit-card"></i>
-                                Payment Method
-                            </label>
-                            <select id="payment_method" name="payment_method" required>
-                                <option value="Bank Transfer">Bank Transfer</option>
-                                <option value="Online Payment">Online Payment (bKash/Nagad/Rocket)</option>
-                                <option value="Cash">Cash</option>
-                                <option value="Cheque">Cheque</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Anonymous Donation -->
-                        <div class="form-group">
-                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                                <input type="checkbox" name="is_anonymous" id="is_anonymous" onchange="toggleAnonymous()">
-                                <i class="fas fa-user-secret"></i>
-                                Make this an anonymous donation
-                            </label>
-                        </div>
-                        
-                        <div id="donor_info">
-                            <h3 style="color: #2c5aa0; margin: 30px 0 20px;">Donor Information</h3>
-                            
+                        <form class="auth-form" method="POST" action="" style="color: white;">
+                            <!-- Donation Amount -->
                             <div class="form-group">
-                                <label for="donor_name">
-                                    <i class="fas fa-user"></i>
-                                    Full Name *
-                                </label>
-                                <input type="text" id="donor_name" name="donor_name" 
-                                       value="<?php echo isset($_POST['donor_name']) ? htmlspecialchars($_POST['donor_name']) : ''; ?>">
+                                <label style="color: white;"><i class="fas fa-dollar-sign"></i> Donation Amount</label>
+                                <div class="amount-options" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px;">
+                                    <div class="amount-option" onclick="selectAmount(1000)">
+                                        <input type="radio" name="amount" value="1000" id="amount_1000">
+                                        <label for="amount_1000">৳1,000</label>
+                                    </div>
+                                    <div class="amount-option" onclick="selectAmount(2500)">
+                                        <input type="radio" name="amount" value="2500" id="amount_2500">
+                                        <label for="amount_2500">৳2,500</label>
+                                    </div>
+                                    <div class="amount-option" onclick="selectAmount(5000)">
+                                        <input type="radio" name="amount" value="5000" id="amount_5000">
+                                        <label for="amount_5000">৳5,000</label>
+                                    </div>
+                                    <div class="amount-option" onclick="selectAmount(10000)">
+                                        <input type="radio" name="amount" value="10000" id="amount_10000">
+                                        <label for="amount_10000">৳10,000</label>
+                                    </div>
+                                    <div class="amount-option" onclick="selectAmount(25000)">
+                                        <input type="radio" name="amount" value="25000" id="amount_25000">
+                                        <label for="amount_25000">৳25,000</label>
+                                    </div>
+                                    <div class="amount-option" onclick="selectCustom()">
+                                        <input type="radio" name="amount" value="custom" id="amount_custom">
+                                        <label for="amount_custom">Custom</label>
+                                    </div>
+                                </div>
+                                <input type="number" name="custom_amount" id="custom_amount" placeholder="Enter custom amount" 
+                                       style="display: none; margin-top: 10px; color: black;" min="100" step="50">
                             </div>
                             
+                            <!-- Purpose -->
                             <div class="form-group">
-                                <label for="donor_email">
-                                    <i class="fas fa-envelope"></i>
-                                    Email Address *
+                                <label for="purpose" style="color: white;">
+                                    <i class="fas fa-bullseye"></i>
+                                    Donation Purpose
                                 </label>
-                                <input type="email" id="donor_email" name="donor_email" 
-                                       value="<?php echo isset($_POST['donor_email']) ? htmlspecialchars($_POST['donor_email']) : ''; ?>">
+                                <select id="purpose" name="purpose" required style="color: black;">
+                                    <option value="General Support">General Support</option>
+                                    <option value="Medical Equipment">Medical Equipment</option>
+                                    <option value="Food & Nutrition">Food & Nutrition</option>
+                                    <option value="Recreation & Activities">Recreation & Activities</option>
+                                    <option value="Infrastructure Development">Infrastructure Development</option>
+                                    <option value="Emergency Fund">Emergency Fund</option>
+                                    <option value="Staff Training">Staff Training</option>
+                                </select>
                             </div>
                             
+                            <!-- Payment Method -->
                             <div class="form-group">
-                                <label for="donor_phone">
-                                    <i class="fas fa-phone"></i>
-                                    Phone Number
+                                <label for="payment_method" style="color: white;">
+                                    <i class="fas fa-credit-card"></i>
+                                    Payment Method
                                 </label>
-                                <input type="tel" id="donor_phone" name="donor_phone" 
-                                       value="<?php echo isset($_POST['donor_phone']) ? htmlspecialchars($_POST['donor_phone']) : ''; ?>">
+                                <select id="payment_method" name="payment_method" required style="color: black;">
+                                    <option value="Bank Transfer">Bank Transfer</option>
+                                    <option value="Online Payment">Online Payment (bKash/Nagad/Rocket)</option>
+                                    <option value="Cash">Cash</option>
+                                    <option value="Cheque">Cheque</option>
+                                </select>
                             </div>
-                        </div>
+                            
+                            <!-- Anonymous Donation -->
+                            <div class="form-group">
+                                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: white;">
+                                    <input type="checkbox" name="is_anonymous" id="is_anonymous" onchange="toggleAnonymous()">
+                                    <i class="fas fa-user-secret"></i>
+                                    Make this an anonymous donation
+                                </label>
+                            </div>
+                            
+                            <div id="donor_info">
+                                <h3 style="color: white; margin: 30px 0 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">Donor Information</h3>
+                                
+                                <div class="form-group">
+                                    <label for="donor_name" style="color: white;">
+                                        <i class="fas fa-user"></i>
+                                        Full Name *
+                                    </label>
+                                    <input type="text" id="donor_name" name="donor_name" style="color: black;"
+                                           value="<?php echo isset($_POST['donor_name']) ? htmlspecialchars($_POST['donor_name']) : ''; ?>">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="donor_email" style="color: white;">
+                                        <i class="fas fa-envelope"></i>
+                                        Email Address *
+                                    </label>
+                                    <input type="email" id="donor_email" name="donor_email" style="color: black;"
+                                           value="<?php echo isset($_POST['donor_email']) ? htmlspecialchars($_POST['donor_email']) : ''; ?>">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="donor_phone" style="color: white;">
+                                        <i class="fas fa-phone"></i>
+                                        Phone Number
+                                    </label>
+                                    <input type="tel" id="donor_phone" name="donor_phone" style="color: black;"
+                                           value="<?php echo isset($_POST['donor_phone']) ? htmlspecialchars($_POST['donor_phone']) : ''; ?>">
+                                </div>
+                            </div>
+                            
+                            <button type="submit" name="donate" class="btn btn-primary btn-full">
+                                <i class="fas fa-heart"></i>
+                                Donate Now
+                            </button>
+                        </form>
                         
-                        <button type="submit" name="donate" class="btn btn-primary btn-full">
-                            <i class="fas fa-heart"></i>
-                            Donate Now
-                        </button>
-                    </form>
-                    
-                    <!-- Payment Information -->
-                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e9ecef;">
-                        <h4 style="color: #2c5aa0; margin-bottom: 15px;">Payment Information</h4>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; font-size: 0.9rem;">
-                            <div>
-                                <strong>Bank Transfer:</strong><br>
-                                Account: Maple House<br>
-                                A/C No: 1234567890<br>
-                                Bank: ABC Bank Ltd.
-                            </div>
-                            <div>
-                                <strong>bKash:</strong><br>
-                                Personal: 01234567890<br>
-                                <strong>Nagad:</strong><br>
-                                Personal: 01234567890
-                            </div>
-                            <div>
-                                <strong>Cash/Cheque:</strong><br>
-                                Visit our office at:<br>
-                                123 Care Street, Dhaka<br>
-                                Office Hours: 9 AM - 5 PM
+                        <!-- Payment Information -->
+                        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.2);">
+                            <h4 style="color: white; margin-bottom: 15px; text-shadow: 1px 1px 3px rgba(0,0,0,0.3);">Payment Information</h4>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; font-size: 0.9rem; color: white;">
+                                <div>
+                                    <strong>Bank Transfer:</strong><br>
+                                    Account: Maple House<br>
+                                    A/C No: 1234567890<br>
+                                    Bank: ABC Bank Ltd.
+                                </div>
+                                <div>
+                                    <strong>bKash:</strong><br>
+                                    Personal: 01234567890<br>
+                                    <strong>Nagad:</strong><br>
+                                    Personal: 01234567890
+                                </div>
+                                <div>
+                                    <strong>Cash/Cheque:</strong><br>
+                                    Visit our office at:<br>
+                                    123 Care Street, Dhaka<br>
+                                    Office Hours: 9 AM - 5 PM
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -328,8 +365,8 @@ if ($_POST && isset($_POST['donate'])) {
 
     <style>
         .amount-option {
-            background: #f8f9fa;
-            border: 2px solid #e9ecef;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 8px;
             padding: 15px;
             text-align: center;
@@ -339,8 +376,8 @@ if ($_POST && isset($_POST['donate'])) {
         
         .amount-option:hover,
         .amount-option.selected {
-            border-color: #2c5aa0;
-            background: rgba(44, 90, 160, 0.1);
+            border-color: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.3);
         }
         
         .amount-option input {
@@ -350,7 +387,7 @@ if ($_POST && isset($_POST['donate'])) {
         .amount-option label {
             cursor: pointer;
             font-weight: 500;
-            color: #2c5aa0;
+            color: white;
             margin: 0;
         }
     </style>
