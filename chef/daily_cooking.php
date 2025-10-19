@@ -53,6 +53,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $success_message = "Cooking completed for $meal_type on " . date('M j, Y', strtotime($meal_date));
     }
     
+    if (isset($_POST['cancel_cooking'])) {
+        $meal_date = $_POST['meal_date'];
+        $meal_type = $_POST['meal_type'];
+        
+        $cancel_query = "UPDATE chef_cooking_sessions 
+                        SET cooking_status = 'Cancelled', completed_at = NOW() 
+                        WHERE chef_id = ? AND meal_date = ? AND meal_type = ?";
+        $cancel_stmt = $db->prepare($cancel_query);
+        $cancel_stmt->execute([$chef_id, $meal_date, $meal_type]);
+        
+        $success_message = "Cooking cancelled for $meal_type on " . date('M j, Y', strtotime($meal_date));
+    }
+    
     if (isset($_POST['use_inventory'])) {
         $cooking_session_id = $_POST['cooking_session_id'];
         $inventory_item_id = $_POST['inventory_item_id'];
@@ -343,6 +356,11 @@ $inventory_items = $inventory_stmt->fetchAll(PDO::FETCH_ASSOC);
             color: white;
         }
 
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
         .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
@@ -403,6 +421,180 @@ $inventory_items = $inventory_stmt->fetchAll(PDO::FETCH_ASSOC);
             border-color: #667eea;
         }
 
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 0;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 25px;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header.cancel-header {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .close {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+            transition: transform 0.2s ease;
+        }
+
+        .close:hover {
+            transform: scale(1.2);
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .modal-meal-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #28a745;
+        }
+
+        .modal-meal-info h4 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-meal-info p {
+            margin: 5px 0;
+            color: #6c757d;
+        }
+
+        .modal-confirmation {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .modal-confirmation.danger {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+        }
+
+        .modal-confirmation p {
+            margin: 0;
+            color: #856404;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-confirmation.danger p {
+            color: #721c24;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal-btn-cancel {
+            background: #6c757d;
+            color: white;
+        }
+
+        .modal-btn-cancel:hover {
+            background: #5a6268;
+        }
+
+        .modal-btn-confirm {
+            background: #28a745;
+            color: white;
+        }
+
+        .modal-btn-confirm:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .modal-btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .modal-btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             body {
@@ -419,6 +611,20 @@ $inventory_items = $inventory_stmt->fetchAll(PDO::FETCH_ASSOC);
 
             .cooking-actions {
                 flex-direction: column;
+            }
+
+            .modal-content {
+                margin: 20% auto;
+                width: 95%;
+            }
+
+            .modal-actions {
+                flex-direction: column;
+            }
+
+            .modal-btn {
+                width: 100%;
+                justify-content: center;
             }
         }
     </style>
@@ -509,13 +715,17 @@ $inventory_items = $inventory_stmt->fetchAll(PDO::FETCH_ASSOC);
                                 </button>
                             </form>
                         <?php elseif ($assignment['cooking_status'] === 'In Progress'): ?>
-                            <form method="POST" style="display: inline;">
-                                <input type="hidden" name="meal_date" value="<?php echo $assignment['meal_date']; ?>">
-                                <input type="hidden" name="meal_type" value="<?php echo $assignment['meal_type']; ?>">
-                                <button type="submit" name="complete_cooking" class="btn btn-success">
-                                    <i class="fas fa-check"></i> Mark Complete
-                                </button>
-                            </form>
+                            <button type="button" 
+                                    onclick="openCompleteModal('<?php echo $assignment['meal_date']; ?>', '<?php echo $assignment['meal_type']; ?>', '<?php echo $assignment['total_residents']; ?>')" 
+                                    class="btn btn-success">
+                                <i class="fas fa-check"></i> Mark Complete
+                            </button>
+                            <button type="button" 
+                                    onclick="openCancelModal('<?php echo $assignment['meal_date']; ?>', '<?php echo $assignment['meal_type']; ?>', '<?php echo $assignment['total_residents']; ?>')" 
+                                    class="btn btn-danger"
+                                    style="background: #dc3545;">
+                                <i class="fas fa-times-circle"></i> Cancel Cooking
+                            </button>
                         <?php endif; ?>
                         
                         <?php if ($assignment['cooking_status'] === 'Completed'): ?>
@@ -590,5 +800,180 @@ $inventory_items = $inventory_stmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
         <?php endif; ?>
     </div>
+
+    <!-- Complete Cooking Modal -->
+    <div id="completeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>
+                    <i class="fas fa-check-circle"></i> Complete Cooking
+                </h3>
+                <span class="close" onclick="closeCompleteModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="modal-meal-info">
+                    <h4>
+                        <i class="fas fa-utensils"></i> Meal Details
+                    </h4>
+                    <p><strong>Meal Type:</strong> <span id="modalMealType"></span></p>
+                    <p><strong>Date:</strong> <span id="modalMealDate"></span></p>
+                    <p><strong>Total Residents:</strong> <span id="modalResidentCount"></span></p>
+                </div>
+
+                <div class="modal-confirmation">
+                    <p>
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Are you sure you have completed cooking for this meal?</strong>
+                    </p>
+                </div>
+
+                <p style="color: #6c757d; font-size: 0.95rem; margin-bottom: 25px;">
+                    <i class="fas fa-lightbulb" style="color: #ffc107;"></i>
+                    This will mark the meal as completed and update the cooking status. Make sure all preparations are finished before confirming.
+                </p>
+
+                <form id="completeForm" method="POST">
+                    <input type="hidden" name="meal_date" id="completeMealDate">
+                    <input type="hidden" name="meal_type" id="completeMealType">
+                    <input type="hidden" name="complete_cooking" value="1">
+                    
+                    <div class="modal-actions">
+                        <button type="button" class="modal-btn modal-btn-cancel" onclick="closeCompleteModal()">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <button type="submit" class="modal-btn modal-btn-confirm">
+                            <i class="fas fa-check-circle"></i> Yes, Mark Complete
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cancel Cooking Modal -->
+    <div id="cancelModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header cancel-header">
+                <h3>
+                    <i class="fas fa-exclamation-triangle"></i> Cancel Cooking
+                </h3>
+                <span class="close" onclick="closeCancelModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="modal-meal-info">
+                    <h4>
+                        <i class="fas fa-utensils"></i> Meal Details
+                    </h4>
+                    <p><strong>Meal Type:</strong> <span id="cancelModalMealType"></span></p>
+                    <p><strong>Date:</strong> <span id="cancelModalMealDate"></span></p>
+                    <p><strong>Total Residents:</strong> <span id="cancelModalResidentCount"></span></p>
+                </div>
+
+                <div class="modal-confirmation danger">
+                    <p>
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Are you sure you want to cancel this cooking session?</strong>
+                    </p>
+                </div>
+
+                <p style="color: #721c24; font-size: 0.95rem; margin-bottom: 25px; background: #f8d7da; padding: 15px; border-radius: 8px;">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Warning:</strong> Cancelling will stop the cooking session. Any inventory items already used will remain recorded. This action cannot be undone.
+                </p>
+
+                <form id="cancelForm" method="POST">
+                    <input type="hidden" name="meal_date" id="cancelMealDate">
+                    <input type="hidden" name="meal_type" id="cancelMealType">
+                    <input type="hidden" name="cancel_cooking" value="1">
+                    
+                    <div class="modal-actions">
+                        <button type="button" class="modal-btn modal-btn-cancel" onclick="closeCancelModal()">
+                            <i class="fas fa-arrow-left"></i> Go Back
+                        </button>
+                        <button type="submit" class="modal-btn modal-btn-danger">
+                            <i class="fas fa-times-circle"></i> Yes, Cancel Cooking
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openCompleteModal(mealDate, mealType, residentCount) {
+            // Set modal values
+            document.getElementById('completeMealDate').value = mealDate;
+            document.getElementById('completeMealType').value = mealType;
+            
+            // Display values
+            document.getElementById('modalMealType').textContent = mealType;
+            
+            // Format date nicely
+            const dateObj = new Date(mealDate);
+            const formattedDate = dateObj.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            document.getElementById('modalMealDate').textContent = formattedDate;
+            document.getElementById('modalResidentCount').textContent = residentCount;
+            
+            // Show modal
+            document.getElementById('completeModal').style.display = 'block';
+        }
+
+        function closeCompleteModal() {
+            document.getElementById('completeModal').style.display = 'none';
+        }
+
+        function openCancelModal(mealDate, mealType, residentCount) {
+            // Set modal values
+            document.getElementById('cancelMealDate').value = mealDate;
+            document.getElementById('cancelMealType').value = mealType;
+            
+            // Display values
+            document.getElementById('cancelModalMealType').textContent = mealType;
+            
+            // Format date nicely
+            const dateObj = new Date(mealDate);
+            const formattedDate = dateObj.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            document.getElementById('cancelModalMealDate').textContent = formattedDate;
+            document.getElementById('cancelModalResidentCount').textContent = residentCount;
+            
+            // Show modal
+            document.getElementById('cancelModal').style.display = 'block';
+        }
+
+        function closeCancelModal() {
+            document.getElementById('cancelModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const completeModal = document.getElementById('completeModal');
+            const cancelModal = document.getElementById('cancelModal');
+            
+            if (event.target === completeModal) {
+                closeCompleteModal();
+            }
+            if (event.target === cancelModal) {
+                closeCancelModal();
+            }
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeCompleteModal();
+                closeCancelModal();
+            }
+        });
+    </script>
 </body>
 </html>

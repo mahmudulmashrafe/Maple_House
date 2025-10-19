@@ -1247,38 +1247,59 @@ try {
             const shift = shiftHours.toLowerCase();
             const time = preferredTime.toLowerCase();
             
-            // Morning: 6:00 AM - 12:00 PM
-            if (time === 'morning') {
-                return shift.includes('6') || shift.includes('7') || shift.includes('8') || 
-                       shift.includes('9') || shift.includes('10') || shift.includes('11') || 
-                       shift.includes('12') || shift.includes('am');
-            }
-            // Afternoon: 12:00 PM - 5:00 PM
-            else if (time === 'afternoon') {
-                return shift.includes('12') || shift.includes('1') || shift.includes('2') || 
-                       shift.includes('3') || shift.includes('4') || shift.includes('5') || 
-                       shift.includes('pm');
-            }
-            // Evening: 5:00 PM - 8:00 PM
-            else if (time === 'evening') {
-                return shift.includes('5') || shift.includes('6') || shift.includes('7') || 
-                       shift.includes('8') || shift.includes('pm') || shift.includes('evening');
-            }
-            // Night: 8:00 PM - 12:00 AM
-            else if (time === 'night') {
-                return shift.includes('8') || shift.includes('9') || shift.includes('10') || 
-                       shift.includes('11') || shift.includes('12') || shift.includes('pm') || 
-                       shift.includes('night');
-            }
-            // Late Night: 12:00 AM - 6:00 AM
-            else if (time === 'latenight') {
-                return shift.includes('12') || shift.includes('1') || shift.includes('2') || 
-                       shift.includes('3') || shift.includes('4') || shift.includes('5') || 
-                       shift.includes('6') || shift.includes('am') || shift.includes('late') || 
-                       shift.includes('overnight');
+            // Parse shift hours (e.g., "4:00 PM - 10:00 PM" or "9 AM - 3 PM")
+            const timeMatch = shift.match(/(\d{1,2}):?(\d{2})?\s*(am|pm).*?(\d{1,2}):?(\d{2})?\s*(am|pm)/i);
+            
+            if (!timeMatch) {
+                // Can't parse, show all
+                return true;
             }
             
-            return true; // Default show all
+            // Convert start time to 24-hour format
+            let startHour = parseInt(timeMatch[1]);
+            const startMinute = timeMatch[2] ? parseInt(timeMatch[2]) : 0;
+            const startPeriod = timeMatch[3].toLowerCase();
+            
+            if (startPeriod === 'pm' && startHour !== 12) {
+                startHour += 12;
+            } else if (startPeriod === 'am' && startHour === 12) {
+                startHour = 0;
+            }
+            
+            // Convert end time to 24-hour format
+            let endHour = parseInt(timeMatch[4]);
+            const endMinute = timeMatch[5] ? parseInt(timeMatch[5]) : 0;
+            const endPeriod = timeMatch[6].toLowerCase();
+            
+            if (endPeriod === 'pm' && endHour !== 12) {
+                endHour += 12;
+            } else if (endPeriod === 'am' && endHour === 12) {
+                endHour = 0;
+            }
+            
+            // Define time ranges for each period (in 24-hour format)
+            const timeRanges = {
+                'morning': { start: 6, end: 12 },      // 6:00 AM - 12:00 PM
+                'afternoon': { start: 12, end: 17 },   // 12:00 PM - 5:00 PM
+                'evening': { start: 17, end: 20 },     // 5:00 PM - 8:00 PM
+                'night': { start: 20, end: 24 },       // 8:00 PM - 12:00 AM
+                'latenight': { start: 0, end: 6 }      // 12:00 AM - 6:00 AM
+            };
+            
+            const requestedRange = timeRanges[time];
+            if (!requestedRange) return true; // Unknown time, show all
+            
+            // Check if staff shift overlaps with requested time range
+            // Shift overlaps if: (shift_start < request_end) AND (shift_end > request_start)
+            const overlaps = (startHour < requestedRange.end && endHour > requestedRange.start);
+            
+            // Also handle overnight shifts (if end < start, it crosses midnight)
+            if (endHour < startHour) {
+                // Overnight shift - check both parts
+                return (startHour < requestedRange.end) || (endHour > requestedRange.start);
+            }
+            
+            return overlaps;
         }
         
         // Store all staff with their shift hours

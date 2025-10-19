@@ -79,23 +79,22 @@ if ($_POST && isset($_POST['login'])) {
                 </div>
             <?php endif; ?>
             
-            <form class="auth-form" method="POST" action="" style="color: white;">
+            <form class="auth-form" method="POST" action="">
                 <div class="form-group">
-                    <label for="username" style="color: white;">
+                    <label for="username">
                         <i class="fas fa-user"></i>
                         Username
                     </label>
                     <input type="text" id="username" name="username" required 
-                           value="<?php echo isset($_POST['username']) ? htmlspecialchars($_POST['username']) : ''; ?>"
-                           style="color: black;">
+                           value="<?php echo isset($_POST['username']) ? htmlspecialchars($_POST['username']) : ''; ?>">
                 </div>
                 
                 <div class="form-group">
-                    <label for="password" style="color: white;">
+                    <label for="password">
                         <i class="fas fa-lock"></i>
                         Password
                     </label>
-                    <input type="password" id="password" name="password" required style="color: black;">
+                    <input type="password" id="password" name="password" required>
                     <div style="text-align: right; margin-top: 8px;">
                         <a href="reset_password.php" style="color: rgba(255, 255, 255, 0.9); font-size: 0.9rem; text-decoration: none;">
                             <i class="fas fa-key"></i> Forgot Password?
@@ -110,8 +109,8 @@ if ($_POST && isset($_POST['login'])) {
             </form>
             
             <div class="auth-links">
-                <p style="color: white;">New resident? <a href="register.php">Register here</a></p>
-                <p style="color: white;"><a href="index.php">← Back to Home</a></p>
+                <p>New resident? <a href="register.php">Register here</a></p>
+                <p><a href="index.php">← Back to Home</a></p>
             </div>
         </div>
     </div>
